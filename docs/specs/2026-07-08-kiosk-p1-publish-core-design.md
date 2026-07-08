@@ -255,6 +255,23 @@ frame-src  'none';
 - **恶意内容扫描**(Safe Browsing / 钓鱼识别):以后,非 MVP。
 - 单页 2MB 上限在 API 层拦;限流见 §7.1。
 
+### 5.6 加密与隐私
+- **传输**:全程 HTTPS/TLS(Vercel 自带)。
+- **静态**:数据库存储层加密(Neon 默认),P1 不额外做应用层加密。
+- **隐私模型 = 访问控制(非内容加密)**:
+  - P1:页面为 unlisted 公开链接,**链接即访问凭证**("知道链接就能看")。
+  - P2:认证式访问控制(组织成员 / 页面级 read/share ACL / 对非成员可见性)——**主力隐私能力**;凭证是**身份**而非链接,链接泄漏 ≠ 内容泄漏。
+- **端到端 / 零知识内容加密(E2E):P1 明确不做,且暂不预留 schema**。备忘(免重复纠结):① 与"公开 serving / P3 服务端导出 / P2 多人共享 / P4 批注"冲突;② 零知识 = 丢密钥/链接即永久不可恢复的数据悬崖;③ `#fragment` 带密钥只挡服务器、挡不住"链接本身泄漏",而多数隐私诉求恰恰要防链接泄漏 → 由上面的认证访问控制覆盖更对。若未来确有零知识需求,再作为 opt-in 模式单独设计(密钥绑链接不绑机器 + 明确不可找回 UX)。
+
+### 5.7 前瞻:P4 组织主题兼容性(非 P1 实现项,仅备忘)
+"管理员配置组织内统一样式"属 **P4**(依赖 P2 组织,进不了 P1)。此处仅记录 P1 已为其留好路、现在无需改动:
+- **实现方向**:推荐 **serving 时注入** org 主题(内联 `<style>` + 可选页眉/页脚 chrome),主题契约 = CSS 变量(`--brand-*` 等)+ 框架/内容槽 + 作用域隔离;改主题**即时全量生效**。"发布时烘焙进 HTML"为备选(不回溯,不推荐)。
+- **CSP 兼容**:`style-src 'unsafe-inline'` 已允许内联主题,P4 无需改 CSP。
+- **serving 兼容**:P1 serving 已是"服务端可控响应",P4 扩成"注入变换"是自然延伸。
+- **缓存**:届时缓存键/标签需加 **org 主题版本**维度,改主题按 org 批量 `revalidate`。
+- **数据模型**:`organization` 表已就位,P4 仅加 org 主题表/列,纯增量。
+- **生成约定**:P4 起在 skill 引导 AI 用 CSS 变量、勿写死品牌值,使页面"可主题化"。
+
 ---
 
 ## 6. 控制台
@@ -330,7 +347,7 @@ frame-src  'none';
 - 页面级 read/write/share 权限、对非成员可见性控制 —— **P2**
 - 导出 MD/HTML/PDF/PNG/JPEG —— **P3**
 - 批注、组织主题 —— **P4**
-- 自定义 slug、自定义域名;多文件/外链(opt-in);版本历史/回滚;邮箱密码/magic link 登录;计费分层;正经分析(UV/来源);恶意扫描;每页独立子域隔离;CLI/skill 文档 i18n
+- 自定义 slug、自定义域名;多文件/外链(opt-in);版本历史/回滚;邮箱密码/magic link 登录;计费分层;正经分析(UV/来源);恶意扫描;每页独立子域隔离;CLI/skill 文档 i18n;**内容 E2E/零知识加密**(未定,暂不预留 schema)
 
 ### 7.8 建议实现切片(给 writing-plans 铺垫,顺序可调)
 1. 脚手架(Next.js + Drizzle + Neon + Better Auth)+ schema/迁移 + OAuth 登录 + 个人 org provisioning
@@ -365,5 +382,6 @@ frame-src  'none';
 | 更新语义 | 原地覆盖,无版本历史;软删 `deleted_at` |
 | serving 安全 | 独立域名 + host 分离 + 严格 artifact 式 CSP + noindex + 可嵌入 |
 | 缓存 | CDN + `revalidateTag(public_id)` |
+| 加密/隐私 | 传输 TLS + 静态加密(Neon);隐私靠**访问控制**(P1 链接即凭证 / P2 认证 ACL);E2E **不做、不预留** |
 | 浏览量 | 最小 `view_count`,middleware best-effort 自增(近似) |
 | i18n | next-intl;EN+ZH;仅控制台 UI;无 URL 前缀 |
