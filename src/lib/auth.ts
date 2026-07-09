@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { organization } from "better-auth/plugins";
+import { organization, oidcProvider } from "better-auth/plugins";
 import { db } from "../db";
 import * as schema from "../db/schema";
 
@@ -37,7 +37,36 @@ export const auth = betterAuth({
       },
     },
   },
-  plugins: [organization()],
+  plugins: [
+    organization(),
+    // Kiosk is its own OAuth/OIDC provider for the CLI. The `kiosk-cli` client is a
+    // trusted PUBLIC client: authorization-code + PKCE + loopback, consent skipped.
+    oidcProvider({
+      loginPage: "/sign-in", // no session → redirected here with the original oauth query
+      trustedClients: [
+        {
+          clientId: "kiosk-cli",
+          // `type: "public"` ⇒ the CLI authenticates via PKCE and never sends a secret.
+          // A non-empty secret is still required because the token endpoint always signs
+          // an id_token, and jose rejects a zero-length HMAC key. This value signs only
+          // the (unused) id_token; it is never sent by or verified against the CLI.
+          clientSecret: process.env.BETTER_AUTH_SECRET!,
+          type: "public",
+          name: "Kiosk CLI",
+          disabled: false,
+          metadata: null,
+          // Better Auth matches redirect_uri exactly (no RFC 8252 port flexibility), so
+          // the CLI binds the first free port among these fixed candidates.
+          redirectUrls: [
+            "http://127.0.0.1:8976/callback",
+            "http://127.0.0.1:8977/callback",
+            "http://127.0.0.1:8978/callback",
+          ],
+          skipConsent: true,
+        },
+      ],
+    }),
+  ],
 });
 
 export type Auth = typeof auth;

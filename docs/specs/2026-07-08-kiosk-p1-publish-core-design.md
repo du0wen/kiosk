@@ -197,10 +197,11 @@ P2 的组织/成员/邀请/角色在表层已全部就位(`organization`/`member
 - 页面访问校验:`page.organization_id` 必须等于调用者 org(P1 = 其唯一 org);`created_by` 记录创建者。
 - P2 再叠**组织内**角色(owner/admin/member)与页面级 read/write/share——`member.role` 列已就位。注:组织内角色是**租户内部**维度,与 §5.5 的**系统/平台管理员**(跨租户、Kiosk 运营方)是两回事。
 
-### 4.4 CLI 鉴权握手
-- **`kiosk login`(交互默认)= 浏览器 loopback 授权码流**(同 `gh`/`claude`/`mcp login`):CLI 起本地 `127.0.0.1:<port>` 回调 server + 随机 `state`,开浏览器到 `APP_ORIGIN/cli/authorize?redirect_uri=…&state=…`(需 Better Auth 会话,未登录先走 OAuth)→ 用户点"授权"→ 服务端发**一次性 code** 302 回 loopback → CLI 拿 code `POST APP_ORIGIN/api/cli/exchange` 换 token → 存 config。`redirect_uri` **仅允许 loopback**(防 code 外泄);`state` 双向校验。
-- **`kiosk login --token <t>` / `KIOSK_TOKEN` = headless/agent/CI 兜底**(AI agent 无浏览器,靠这条);优先级 env > config。二者是**叠加**关系:浏览器流做人机交互默认路径,token env/config 供无头环境。
-- 浏览器流铸的 token 名如 "CLI on <device>"。失效 401 → 提示重新 `kiosk login`。
+### 4.4 CLI 鉴权握手(Better Auth 标准 OAuth + 长效 api_token)
+- **`kiosk login`(交互默认)= Better Auth `oidcProvider` 标准授权码 + PKCE + loopback**(对齐 Claude Code,零自定义 OAuth 路由):CLI 是 trusted 一方 **public client**(`kiosk-cli`,`token_endpoint_auth_method: none`,`skipConsent: true`),生成 PKCE(S256)+ state,起本地 loopback server,开浏览器到 `APP_ORIGIN/oauth2/authorize?…`;未登录经插件 `loginPage=/sign-in` 走 OAuth,**登录后插件自动续授权流、免同意页** → 302 回 loopback 带 `code` → CLI `POST /oauth2/token`(带 code_verifier)拿 oidc access token。
+- **登录尾换长效凭据**:CLI 拿到 oidc token 后**立即用它调一个已认证的"建 token"接口,铸一个长效 `kiosk_live_` api_token**,存 config;**后续所有 `/api/v1` 调用一律用 api_token**(`verifyToken` 不改)。oidc 只负责登录/证明身份,不进 API 热路径(其 access token 不透明、只能 userinfo 往返校验,不适合逐调用鉴权;且会过期)。
+- **loopback 端口 = 固定候选**:Better Auth oidcProvider 的 redirect_uri **精确匹配**(源码 `url === redirect_uri`,不遵守 RFC 8252 忽略端口),故 trusted client 的 `redirectUrls` 注册一组候选(`http://127.0.0.1:{8976,8977,8978}/callback`),CLI 绑第一个空闲端口、用对应 URL。SSH/容器无 loopback 时的 paste 兜底留作后续。
+- **`KIOSK_TOKEN` / `kiosk login --token <t>` = headless/agent/CI 兜底**(长效 api_token,控制台或本流程生成);优先级 env > config。二者叠加:浏览器流是人机交互默认,token env/config 供无头。
 
 ### 4.5 serving 与鉴权解耦
 公开 serving(`SERVE_ORIGIN`)**完全不碰**这套鉴权——只按 `public_id` 读活跃页返回 HTML,无 cookie、无 session。

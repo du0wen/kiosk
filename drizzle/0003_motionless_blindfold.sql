@@ -1,0 +1,1 @@
+DROP TABLE "cli_auth_code" CASCADE;

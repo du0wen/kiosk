@@ -22,6 +22,27 @@
       "when": 1783600665622,
       "tag": "0002_complete_drax",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1783612924571,
+      "tag": "0003_motionless_blindfold",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1783612934857,
+      "tag": "0004_gorgeous_star_brand",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1783612975032,
+      "tag": "0005_seed_kiosk_cli_client",
+      "breakpoints": true
     }
   ]
 }
