@@ -1,9 +1,12 @@
 "use client";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { authClient } from "@/lib/auth-client";
 
-export default function SignInPage() {
+function SignIn() {
+  const callback = useSearchParams().get("callback") || "/pages";
   const signIn = (provider: "github" | "google") =>
-    authClient.signIn.social({ provider, callbackURL: "/pages" });
+    authClient.signIn.social({ provider, callbackURL: callback });
 
   return (
     <main style={{ maxWidth: 320, margin: "10vh auto", display: "grid", gap: 12 }}>
@@ -11,5 +14,13 @@ export default function SignInPage() {
       <button onClick={() => signIn("github")}>Continue with GitHub</button>
       <button onClick={() => signIn("google")}>Continue with Google</button>
     </main>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense>
+      <SignIn />
+    </Suspense>
   );
 }
