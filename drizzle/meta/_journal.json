@@ -15,6 +15,13 @@
       "when": 1783573404534,
       "tag": "0001_light_the_watchers",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783600665622,
+      "tag": "0002_complete_drax",
+      "breakpoints": true
     }
   ]
 }
