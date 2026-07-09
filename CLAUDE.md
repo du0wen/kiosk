@@ -3,9 +3,9 @@
 给 AI 编码工具(Claude Code / Codex 等)用的发布 skill:AI 生成**自包含 HTML** → 一键发布成**公开可分享链接**,支持同 URL 更新。补 Claude artifact「只能组织内看、无法公开分享」的短板。最终形态是多租户 SaaS(P1→P4)。
 
 ## 当前状态
-- **P1 实现中(6 份计划 5 份完成)**:✅ 1 Foundation · 2 Publish API · 3 Serving · 4 CLI · 4b CLI 浏览器登录 · 5 Skill 打包;⬜ **6 Console + i18n**(前端,未做)。
-- 后端 + CLI 闭环已可用:`kiosk publish` → REST v1 → Neon → `/p/<id>` 严格 CSP serving;`kiosk login` 走浏览器 loopback。**69 测试通过**。
-- **未验证(需手动/凭据)**:OAuth 登录、CLI 浏览器登录真机、CLI→API→serving 端到端(见 Task 8 等)。
+- **P1 代码完成(6 份计划全部落地)**:1 Foundation · 2 Publish API · 3 Serving · 4 CLI · 4b CLI 浏览器登录 · 5 Skill 打包 · 6 Console+i18n。**76 测试通过,build 干净,42 commit。**
+- 全链路:AI 装 skill → 生成自包含 HTML → `kiosk publish`(`kiosk login` 浏览器 loopback 或 `KIOSK_TOKEN`)→ REST v1 存 Neon → `/p/<id>` 严格 CSP serving;控制台管理页面/token(EN/ZH)。
+- **端到端未跑通(需手动 + 凭据)**:OAuth 登录、CLI 浏览器登录、真实 publish→serving —— 都需 GitHub/Google OAuth 凭据 + 浏览器;部署你自管。
 - Spec(定稿):`docs/specs/2026-07-08-kiosk-p1-publish-core-design.md` —— **动非平凡代码前先读它**。实现计划见 `docs/plans/`。
 
 ## 技术栈
