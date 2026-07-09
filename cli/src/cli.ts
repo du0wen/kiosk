@@ -5,14 +5,16 @@ import { publishCommand } from "./commands.js";
 
 const USAGE = `kiosk <command>
 
-  login                 Save an API token (--token <t>, or KIOSK_TOKEN)
+  login                 Log in via the browser (or --token <t> / KIOSK_TOKEN)
   publish <file>        Publish/update an HTML file, prints the public URL
                           --id <id>   update a specific page
                           --new       force a new page
                           --title <t> override the title
                           --json      print JSON
   list                  List your pages
+  open <file>           Open a published page in the browser
   delete <id>           Unpublish a page
+  install-skill         Install the Claude/Codex skill files (--claude/--codex)
   whoami                Show the authenticated account
   logout                Remove the saved token
 `;
@@ -97,6 +99,23 @@ export async function runCli(argv: string[]): Promise<number> {
         const { apiBase, token } = requireToken();
         process.stdout.write(
           JSON.stringify(await new KioskClient(apiBase, token).me(), null, 2) + "\n",
+        );
+        return 0;
+      }
+      case "install-skill": {
+        const { values } = parseArgs({
+          args: rest,
+          options: { claude: { type: "boolean" }, codex: { type: "boolean" } },
+        });
+        const both = !values.claude && !values.codex;
+        const { installSkill } = await import("./skills.js");
+        const written = installSkill({
+          dir: process.cwd(),
+          claude: both || !!values.claude,
+          codex: both || !!values.codex,
+        });
+        process.stdout.write(
+          `Installed skill files:\n${written.map((w) => "  " + w).join("\n")}\n`,
         );
         return 0;
       }

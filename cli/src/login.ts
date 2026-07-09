@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import { randomBytes } from "node:crypto";
-import { spawn } from "node:child_process";
 import type { AddressInfo } from "node:net";
+import { openBrowser } from "./browser.js";
 
 export function appOriginFrom(apiBase: string): string {
   return apiBase.replace(/\/api\/v1\/?$/, "");
@@ -29,20 +29,6 @@ export function parseCallback(
   const code = u.searchParams.get("code");
   if (!code) throw new Error("missing code");
   return { code };
-}
-
-function openBrowser(url: string): void {
-  const cmd =
-    process.platform === "darwin"
-      ? "open"
-      : process.platform === "win32"
-        ? "start"
-        : "xdg-open";
-  try {
-    spawn(cmd, [url], { stdio: "ignore", detached: true }).unref();
-  } catch {
-    // browser could not be opened automatically; the URL is printed for the user
-  }
 }
 
 /** Loopback browser login. Resolves to the minted token. */
