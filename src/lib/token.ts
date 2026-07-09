@@ -76,3 +76,44 @@ export async function verifyToken(
     tokenId: row.id,
   };
 }
+
+/** List an org's tokens (never returns the hash). */
+export async function listTokens(organizationId: string) {
+  const { db } = await import("@/db");
+  const { apiToken } = await import("@/db/schema");
+  const { eq, desc } = await import("drizzle-orm");
+  return db
+    .select({
+      id: apiToken.id,
+      name: apiToken.name,
+      tokenPrefix: apiToken.tokenPrefix,
+      lastUsedAt: apiToken.lastUsedAt,
+      createdAt: apiToken.createdAt,
+      revokedAt: apiToken.revokedAt,
+    })
+    .from(apiToken)
+    .where(eq(apiToken.organizationId, organizationId))
+    .orderBy(desc(apiToken.createdAt));
+}
+
+/** Revoke a token owned by the org. Returns false if not found / not owned. */
+export async function revokeToken(
+  id: string,
+  organizationId: string,
+): Promise<boolean> {
+  const { db } = await import("@/db");
+  const { apiToken } = await import("@/db/schema");
+  const { and, eq, isNull } = await import("drizzle-orm");
+  const [row] = await db
+    .update(apiToken)
+    .set({ revokedAt: new Date() })
+    .where(
+      and(
+        eq(apiToken.id, id),
+        eq(apiToken.organizationId, organizationId),
+        isNull(apiToken.revokedAt),
+      ),
+    )
+    .returning({ id: apiToken.id });
+  return !!row;
+}

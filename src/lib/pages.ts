@@ -161,3 +161,22 @@ export async function incrementViewCount(id: string): Promise<void> {
     .set({ viewCount: sql`${pages.viewCount} + 1` })
     .where(eq(pages.id, id));
 }
+
+export async function renameTitle(
+  publicId: string,
+  organizationId: string,
+  title: string,
+): Promise<boolean> {
+  const [row] = await db
+    .update(pages)
+    .set({ title, updatedAt: new Date() })
+    .where(
+      and(
+        eq(pages.publicId, publicId),
+        eq(pages.organizationId, organizationId),
+        isNull(pages.deletedAt),
+      ),
+    )
+    .returning({ id: pages.id });
+  return !!row;
+}
