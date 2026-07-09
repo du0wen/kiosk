@@ -10,6 +10,9 @@ export default defineConfig({
     include: ["src/**/*.test.ts"],
     // DB-integration tests run serially against one test database.
     fileParallelism: false,
+    // Integration tests make several round-trips to remote Neon; be generous.
+    testTimeout: 30000,
+    hookTimeout: 30000,
   },
   resolve: {
     alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
