@@ -18,7 +18,19 @@
 - **Mint step:** after the oidc flow, mint a durable `kiosk_live_` api_token (oidc tokens expire; agents need durability). Validate the oidc access token by a direct `oauthAccessToken` table lookup (fast, no userinfo HTTP hop).
 - `/api/v1/*` auth is **unchanged** (`verifyToken` on api_token). `KIOSK_TOKEN`/`--token` remain the headless path.
 - Commits carry **no AI attribution**.
-- **Execution-time verifications (inspect the installed better-auth, then implement — not placeholders):** ① exact trusted-client field for a public/none client; ② `oauthAccessToken` column names (accessToken/userId/expiresAt); ③ that `loginPage` continuation works end-to-end (manual smoke).
+---
+
+## Execution Corrections (verified against installed better-auth + jose 6.2.3)
+
+These refine the tasks below; where they conflict, **these win**. All verified by reading `node_modules/better-auth/dist/plugins/oidc-provider/*` and an empirical jose test.
+
+1. **Endpoint paths are under the auth basePath.** Authorize/token/userinfo mount at `/api/auth/oauth2/{authorize,token,userinfo}` (NOT `/oauth2/...`). The CLI must open `${appOrigin}/api/auth/oauth2/authorize` and POST to `.../token`.
+2. **Trusted client MUST carry a `clientSecret`.** `authorize.mjs`→token endpoint always *computes* an id_token by signing with `client.clientSecret`; jose 6.2.3 throws `Zero-length key is not supported` when it's `undefined` (empirically confirmed). Set `clientSecret: process.env.BETTER_AUTH_SECRET!` — used ONLY to sign the (unused) id_token. `type: "public"` (enum: public/web/native/user-agent-based) means the CLI authenticates via **PKCE only** and never sends this secret. Client also needs `type: "public"`, `name`, `metadata: null`, `redirectUrls: string[]`, `skipConsent: true`.
+3. **FK seed required.** `oauthAccessToken.clientId` has a real Drizzle FK → `oauthApplication.clientId` (generator emits `.references()`), and the token endpoint writes `clientId: "kiosk-cli"` (index.mjs:572). A trusted client has no `oauthApplication` row → the FK would fail on first login. Add a **custom migration** seeding one `oauthApplication` row (`client_id='kiosk-cli'`, `type='public'`, `redirect_urls`=the 3 URLs joined, `name`, `disabled=false`, timestamps, an `id`) `ON CONFLICT DO NOTHING`. `getClient` prefers the in-code trusted client (index.mjs:31), so the row exists *only* to satisfy the FK. Column/table identifiers taken from the generated schema at execution time.
+4. **`/sign-in` must resume the authorize flow.** With no session, better-auth redirects to `loginPage?<original-oauth-query>` (authorize.mjs:61). After social login, `/sign-in` must set `callbackURL = /api/auth/oauth2/authorize?<same query>` so the now-authenticated authorize issues the code and 302s to the loopback. (Consent is skipped via the trusted client's `skipConsent`.)
+5. **Consent skip needs the trusted client** (`skipConsent` only reads off trusted clients — authorize.mjs:107/133; DB-registered clients cannot skip). So `trustedClients` is mandatory, which is *why* correction #3 is needed.
+6. **CLI reads only `access_token`** from the token JSON (ignores `id_token`); requests `scope=openid profile email`.
+7. **oidc-token test seed** must satisfy NOT-NULL `refreshToken` + `refreshTokenExpiresAt` and the `clientId` FK (seed an `oauthApplication` row first, or reuse the migration's `kiosk-cli` row).
 
 ---
 
