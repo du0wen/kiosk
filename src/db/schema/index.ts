@@ -1,2 +1,4 @@
-// Re-exports every table. Tasks 4 and 5 append to this file.
-export {};
+// Re-exports every table.
+export * from "./auth";
+export * from "./tokens";
+// pages export added in Task 5.
