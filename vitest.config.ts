@@ -7,7 +7,7 @@ config({ path: ".env" });
 export default defineConfig({
   test: {
     environment: "node",
-    include: ["src/**/*.test.ts"],
+    include: ["src/**/*.test.ts", "cli/src/**/*.test.ts"],
     // DB-integration tests run serially against one test database.
     fileParallelism: false,
     // Integration tests make several round-trips to remote Neon; be generous.
