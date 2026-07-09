@@ -3,9 +3,9 @@
 给 AI 编码工具(Claude Code / Codex 等)用的发布 skill:AI 生成**自包含 HTML** → 一键发布成**公开可分享链接**,支持同 URL 更新。补 Claude artifact「只能组织内看、无法公开分享」的短板。最终形态是多租户 SaaS(P1→P4)。
 
 ## 当前状态
-- **P1 代码完成(6 份计划全部落地)**:1 Foundation · 2 Publish API · 3 Serving · 4 CLI · 4b CLI 浏览器登录 · 5 Skill 打包 · 6 Console+i18n。**76 测试通过,build 干净,42 commit。**
-- 全链路:AI 装 skill → 生成自包含 HTML → `kiosk publish`(`kiosk login` 浏览器 loopback 或 `KIOSK_TOKEN`)→ REST v1 存 Neon → `/p/<id>` 严格 CSP serving;控制台管理页面/token(EN/ZH)。
-- **端到端未跑通(需手动 + 凭据)**:OAuth 登录、CLI 浏览器登录、真实 publish→serving —— 都需 GitHub/Google OAuth 凭据 + 浏览器;部署你自管。
+- **P1 代码完成(6 份计划 + 4b′ oidc 登录重构全部落地)**:1 Foundation · 2 Publish API · 3 Serving · 4 CLI · 4b′ CLI oidc 登录(Better Auth oidcProvider,取代自定义 cli-auth)· 5 Skill 打包 · 6 Console+i18n。**77 测试通过,build 干净。**
+- 全链路:AI 装 skill → 生成自包含 HTML → `kiosk publish`(`kiosk login` = oidcProvider 授权码+PKCE+loopback,登录后换发长效 `kiosk_live_` token;或 `KIOSK_TOKEN`)→ REST v1 存 Neon → `/p/<id>` 严格 CSP serving;控制台管理页面/token(EN/ZH)。
+- **端到端未跑通(需手动 + 凭据)**:OAuth 登录、CLI oidc 登录、真实 publish→serving —— 都需 GitHub/Google OAuth 凭据 + 浏览器;服务端 oidc 端点已冒烟(discovery / authorize→/sign-in / mint 401)。部署你自管。
 - Spec(定稿):`docs/specs/2026-07-08-kiosk-p1-publish-core-design.md` —— **动非平凡代码前先读它**。实现计划见 `docs/plans/`。
 
 ## 技术栈

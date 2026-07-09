@@ -409,3 +409,18 @@ Expected: browser opens `/oauth2/authorize` → (OAuth login if needed, no conse
 **2. Placeholder scan:** none. Three items are explicit **verify-then-implement** steps (trusted-client public field, `oauthAccessToken` columns, loginPage continuation) — inspected against installed source during execution, exactly as the redirect-matching was verified.
 
 **3. Type consistency:** `browserLogin(apiBase) → Promise<string>` (durable api_token) — same return shape the `login` command already consumes. `resolveOidcAccessToken(bearer) → { userId } | null` used by the mint route. `createToken`/`resolveUserOrg` reused with existing signatures. `pkcePair`/`buildAuthorizeUrl`/`parseCallback` defined + unit-tested in Task 3.
+
+---
+
+## Execution Status (done)
+
+All four tasks executed inline on `main`. Commits: `a3a5a82` (T1 oidcProvider + schema/seed), `6917192` (T2 mint endpoint), `28a78a0` (T3 CLI login + sign-in resume).
+
+- **Gate:** 77 tests pass (24 files), `pnpm build` clean, `tsc -p cli` clean. Routes: `/api/cli/token` + `/api/auth/[...all]`; `/cli/authorize` + `/api/cli/exchange` gone.
+- **Server-side smoke (live, no browser):** discovery returns `/api/auth/oauth2/*`; authorize(kiosk-cli, registered redirect, no session) → 302 `/sign-in?…` (query preserved); mint → 401 for missing/invalid token. ✓
+- **Deprecation:** `oidcProvider` is deprecated (→ `@better-auth/oauth-provider`); kept for P1 by decision, migrate at better-auth 2.0.
+
+### Remaining: manual browser e2e (needs you)
+Prereq: in Google Cloud Console, the OAuth client must list redirect URI **`http://localhost:58671/api/auth/callback/google`** (the social-login callback), and your Google account must be a test user. Then, with dev on :58671:
+`KIOSK_API_BASE=http://localhost:58671/api/v1 pnpm exec tsx cli/src/cli.ts login`
+Expect: browser → Google → back to `/sign-in` → authorize → loopback "Login complete" → terminal "Logged in" → `~/.config/kiosk/config.json` holds a `kiosk_live_` token → `kiosk publish` works.
