@@ -1,4 +1,4 @@
-import { and, desc, eq, isNull, lt } from "drizzle-orm";
+import { and, desc, eq, isNull, lt, sql } from "drizzle-orm";
 import { createHash } from "node:crypto";
 import { db } from "@/db";
 import { pages, type Page } from "@/db/schema";
@@ -142,4 +142,22 @@ export async function listPages(params: {
     ? items[items.length - 1].createdAt.toISOString()
     : null;
   return { items, nextCursor };
+}
+
+/** Active page by public_id, without org scoping — for public serving. */
+export async function getPublicPage(publicId: string): Promise<Page | null> {
+  const [row] = await db
+    .select()
+    .from(pages)
+    .where(and(eq(pages.publicId, publicId), isNull(pages.deletedAt)))
+    .limit(1);
+  return row ?? null;
+}
+
+/** Best-effort view-count bump by internal id. */
+export async function incrementViewCount(id: string): Promise<void> {
+  await db
+    .update(pages)
+    .set({ viewCount: sql`${pages.viewCount} + 1` })
+    .where(eq(pages.id, id));
 }
