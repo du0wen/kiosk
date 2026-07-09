@@ -198,9 +198,9 @@ P2 的组织/成员/邀请/角色在表层已全部就位(`organization`/`member
 - P2 再叠**组织内**角色(owner/admin/member)与页面级 read/write/share——`member.role` 列已就位。注:组织内角色是**租户内部**维度,与 §5.5 的**系统/平台管理员**(跨租户、Kiosk 运营方)是两回事。
 
 ### 4.4 CLI 鉴权握手
-- `kiosk login`:拿粘贴 token 打 `GET /api/v1/me` 校验 → 通过则存配置文件。
-- `KIOSK_TOKEN` 优先于配置文件(headless/agent/CI 友好)。
-- 401 → CLI 提示"token 无效或已撤销,请重新 `kiosk login` 或检查 `KIOSK_TOKEN`"。
+- **`kiosk login`(交互默认)= 浏览器 loopback 授权码流**(同 `gh`/`claude`/`mcp login`):CLI 起本地 `127.0.0.1:<port>` 回调 server + 随机 `state`,开浏览器到 `APP_ORIGIN/cli/authorize?redirect_uri=…&state=…`(需 Better Auth 会话,未登录先走 OAuth)→ 用户点"授权"→ 服务端发**一次性 code** 302 回 loopback → CLI 拿 code `POST APP_ORIGIN/api/cli/exchange` 换 token → 存 config。`redirect_uri` **仅允许 loopback**(防 code 外泄);`state` 双向校验。
+- **`kiosk login --token <t>` / `KIOSK_TOKEN` = headless/agent/CI 兜底**(AI agent 无浏览器,靠这条);优先级 env > config。二者是**叠加**关系:浏览器流做人机交互默认路径,token env/config 供无头环境。
+- 浏览器流铸的 token 名如 "CLI on <device>"。失效 401 → 提示重新 `kiosk login`。
 
 ### 4.5 serving 与鉴权解耦
 公开 serving(`SERVE_ORIGIN`)**完全不碰**这套鉴权——只按 `public_id` 读活跃页返回 HTML,无 cookie、无 session。
