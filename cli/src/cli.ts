@@ -34,15 +34,19 @@ export async function runCli(argv: string[]): Promise<number> {
           args: rest,
           options: { token: { type: "string" } },
         });
-        const token = values.token ?? process.env.KIOSK_TOKEN;
-        if (!token) {
-          throw new CliError(
-            "Provide a token: kiosk login --token <t> (or set KIOSK_TOKEN)",
-          );
-        }
         const cfg = resolveConfig();
-        await new KioskClient(cfg.apiBase, token).me(); // validate
-        saveConfig({ token, apiBase: cfg.apiBase });
+        const token = values.token ?? process.env.KIOSK_TOKEN;
+        if (token) {
+          // Headless path: validate the provided token and save it.
+          await new KioskClient(cfg.apiBase, token).me();
+          saveConfig({ token, apiBase: cfg.apiBase });
+          process.stdout.write("Logged in.\n");
+          return 0;
+        }
+        // Interactive path: browser loopback flow.
+        const { browserLogin } = await import("./login.js");
+        const minted = await browserLogin(cfg.apiBase);
+        saveConfig({ token: minted, apiBase: cfg.apiBase });
         process.stdout.write("Logged in.\n");
         return 0;
       }
