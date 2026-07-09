@@ -4,7 +4,13 @@ import { Suspense } from "react";
 import { authClient } from "@/lib/auth-client";
 
 function SignIn() {
-  const callback = useSearchParams().get("callback") || "/pages";
+  const params = useSearchParams();
+  // OIDC login continuation: Better Auth's oidcProvider redirects an unauthenticated
+  // authorize request here with the original oauth query. After login we must return
+  // to the authorize endpoint so it issues the code and redirects to the CLI loopback.
+  const callback = params.get("client_id")
+    ? `/api/auth/oauth2/authorize?${params.toString()}`
+    : params.get("callback") || "/pages";
   const signIn = (provider: "github" | "google") =>
     authClient.signIn.social({ provider, callbackURL: callback });
 
