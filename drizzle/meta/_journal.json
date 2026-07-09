@@ -8,6 +8,13 @@
       "when": 1783567417223,
       "tag": "0000_busy_deathstrike",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1783573404534,
+      "tag": "0001_light_the_watchers",
+      "breakpoints": true
     }
   ]
 }
