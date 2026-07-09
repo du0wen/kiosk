@@ -8,7 +8,7 @@
 - 实现计划:`docs/plans/`(P1 分 6 份顺序执行:Foundation → Publish API → Serving → CLI → Skill packaging → Console+i18n)。
 
 ## 技术栈
-TypeScript · pnpm · Next.js(App Router,单应用)· Drizzle ORM · Neon Postgres(`drizzle-orm/neon-serverless`)· Better Auth(organization + apiKey 插件)· Vitest。部署 Vercel + Neon(可移植 Docker)。
+TypeScript · pnpm · Next.js(App Router,单应用)· Drizzle ORM · Neon Postgres(`drizzle-orm/neon-serverless`)· Better Auth(organization 插件)+ 自定义 API token · Vitest。部署 Vercel + Neon(可移植 Docker)。
 
 ## 命令
 - `pnpm dev` / `pnpm build` / `pnpm start`

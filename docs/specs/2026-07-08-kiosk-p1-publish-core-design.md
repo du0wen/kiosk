@@ -100,7 +100,7 @@ AI 写出 page.html
 **meta 标签(opt-in)**:若 HTML 内含 `<meta name="kiosk-id" content="...">`,`publish` 优先按它更新(power user 把身份钉进文件用)。默认路径仍是状态文件。
 
 ### 2.3 REST API(`/api/v1/*`,CLI 与 curl 共用)
-鉴权:`Authorization: Bearer kiosk_live_xxx`(Better Auth API key 插件校验),每请求作用域 = token 所属 user → 其 org。
+鉴权:`Authorization: Bearer kiosk_live_xxx`(自定义 `verifyToken()` 校验),每请求作用域 = token 所属 user → 其 org。
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
@@ -144,7 +144,7 @@ curl -sS -X PUT https://APP_ORIGIN/api/v1/pages/<id> \
 
 ### 3.1 Better Auth 托管表(不手写,由其 schema 生成)
 - 核心:`user` / `session` / `account` / `verification`
-- API key 插件:`apikey`(token 的 hash + 前缀 + userId + name + 创建/最后使用时间)
+- (注:better-auth 当前版本**无 apiKey 插件**;API token 改为 App 自有表 `api_token`,见 §4.2)
 - organization 插件:`organization` / `member`(userId, organizationId, role)/ `invitation`
 
 **id 策略**:auth 表**保持 Better Auth 默认 text id**(nanoid 风格)。这些表写入率低,text id 无性能问题;不为统一而折腾。`user.id`、`organization.id` 均为 text,故下方外键为 text。
@@ -186,11 +186,11 @@ P2 的组织/成员/邀请/角色在表层已全部就位(`organization`/`member
 - P1 不做邮箱/密码;magic link / 密码登录以后加配置即可,不阻塞。
 - **CSRF**:API 用 bearer token(非 cookie),CSRF 不适用;控制台变更操作用 session cookie,依赖 Better Auth 的 CSRF 防护 + `SameSite=Lax`。
 
-### 4.2 API token(Better Auth API key 插件)
+### 4.2 API token(自定义模块:`src/lib/token.ts` + `api_token` 表)
 - 控制台"新建 token":起名 → 生成 `kiosk_live_<random>`,**明文只显示一次**;落库存 hash + 前缀(展示成 `kiosk_live_abc…`)。前缀留 `live` 为以后可能的 `kiosk_test_` 沙箱 token。
 - **scope**:P1 一律账号全权限(发布/列表/更新/删自己 org 的页),不做细粒度 scope。
 - **撤销**:控制台列出所有 token(名字/创建/最后使用),可逐个撤销;撤销后立即 401。
-- **校验**:`Authorization: Bearer kiosk_live_xxx` → 插件校验 hash → 解析 user → 解析 org。
+- **校验**:`Authorization: Bearer kiosk_live_xxx` → `verifyToken()` 查 hash → 解析 user → 解析 org。落库存 SHA-256 hash + 展示前缀;撤销置 `revoked_at`。
 
 ### 4.3 授权模型(P1)
 - 每个 API/控制台动作作用域到 **调用者 user → 其 org**。
@@ -313,7 +313,7 @@ frame-src  'none';
 ## 7. 非功能 / 配置 / 边界
 
 ### 7.1 限流
-- **API**:按 token 限流(Better Auth API key 插件内置),如 `publish` 60/min;读类更宽。未鉴权按 IP。
+- **API**:按 token 限流(自实现),如 `publish` 60/min;读类更宽。未鉴权按 IP。
 - **serving**:主要靠 CDN;源站对未命中缓存的请求按 IP 兜底限流。
 - **/report**:按 IP 限流防刷。
 
@@ -374,7 +374,7 @@ frame-src  'none';
 | 客户端 | CLI 主路径(`@kiosk/cli`)+ REST API 底座(curl 兜底) |
 | 公开 URL | `SERVE_ORIGIN/p/<public_id>`;public_id = ~12 位 base62;unlisted |
 | 同 URL 更新身份 | 项目级 `.kiosk/pages.json`(默认)+ `--id`/`--new` + meta 标签 opt-in |
-| 认证库 | Better Auth(API key 插件 + organization 插件) |
+| 认证库 | Better Auth(organization 插件)+ 自定义 API token(`api_token` 表) |
 | 登录 | OAuth GitHub + Google |
 | API token | 控制台生成 `kiosk_live_*` + `kiosk login` 粘贴;落库存 hash |
 | 数据模型 | 全量 org-first;注册建 personal org;`pages.organization_id` 非空 |
