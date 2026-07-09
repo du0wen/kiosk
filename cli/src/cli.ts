@@ -119,6 +119,18 @@ export async function runCli(argv: string[]): Promise<number> {
         );
         return 0;
       }
+      case "open": {
+        const { positionals } = parseArgs({ args: rest, allowPositionals: true });
+        const target = positionals[0];
+        if (!target) throw new CliError("Usage: kiosk open <file>");
+        const { findProjectRoot } = await import("./state.js");
+        const { resolveOpenUrl } = await import("./open.js");
+        const { openBrowser } = await import("./browser.js");
+        const url = resolveOpenUrl(findProjectRoot(process.cwd()), target);
+        process.stdout.write(url + "\n");
+        openBrowser(url);
+        return 0;
+      }
       default:
         process.stdout.write(USAGE);
         return command ? 1 : 0;
