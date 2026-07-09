@@ -23,6 +23,20 @@ export const auth = betterAuth({
     cookiePrefix: "__Host-kiosk",
     useSecureCookies: true,
   },
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (createdUser) => {
+          // Dynamic import avoids a load-time cycle (org.ts imports db).
+          const { provisionPersonalOrg } = await import("./org");
+          await provisionPersonalOrg(
+            createdUser.id,
+            createdUser.name ?? createdUser.email,
+          );
+        },
+      },
+    },
+  },
   plugins: [organization()],
 });
 
