@@ -1,0 +1,33 @@
+{
+  "nav": { "pages": "Pages", "tokens": "API Tokens", "settings": "Settings", "signOut": "Sign out" },
+  "pages": {
+    "title": "Your pages",
+    "empty": "No pages yet. Install the CLI, run `kiosk login`, `kiosk install-skill`, then publish from your AI tool.",
+    "copy": "Copy link",
+    "copied": "Copied",
+    "open": "Open",
+    "rename": "Rename",
+    "delete": "Delete",
+    "views": "views",
+    "updated": "Updated",
+    "confirmDelete": "Delete this page? The public link will stop working."
+  },
+  "tokens": {
+    "title": "API Tokens",
+    "create": "Create token",
+    "name": "Name",
+    "created": "Created",
+    "lastUsed": "Last used",
+    "revoke": "Revoke",
+    "revoked": "revoked",
+    "never": "never",
+    "shownOnce": "Copy this token now — it is shown only once."
+  },
+  "report": {
+    "title": "Report a page",
+    "url": "Page URL",
+    "reason": "Reason",
+    "submit": "Submit",
+    "thanks": "Thanks — we'll review it."
+  }
+}

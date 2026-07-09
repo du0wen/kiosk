@@ -1,0 +1,33 @@
+{
+  "nav": { "pages": "页面", "tokens": "API 令牌", "settings": "设置", "signOut": "退出登录" },
+  "pages": {
+    "title": "你的页面",
+    "empty": "还没有页面。安装 CLI,运行 `kiosk login`、`kiosk install-skill`,然后在 AI 工具里发布。",
+    "copy": "复制链接",
+    "copied": "已复制",
+    "open": "打开",
+    "rename": "重命名",
+    "delete": "删除",
+    "views": "次浏览",
+    "updated": "更新于",
+    "confirmDelete": "删除此页?公开链接将失效。"
+  },
+  "tokens": {
+    "title": "API 令牌",
+    "create": "新建令牌",
+    "name": "名称",
+    "created": "创建于",
+    "lastUsed": "最后使用",
+    "revoke": "撤销",
+    "revoked": "已撤销",
+    "never": "从未",
+    "shownOnce": "立即复制此令牌——只显示这一次。"
+  },
+  "report": {
+    "title": "举报页面",
+    "url": "页面 URL",
+    "reason": "原因",
+    "submit": "提交",
+    "thanks": "谢谢,我们会核查。"
+  }
+}
