@@ -1,4 +1,5 @@
 import { parseArgs } from "node:util";
+import { fileURLToPath } from "node:url";
 import { resolveConfig, saveConfig } from "./config.js";
 import { KioskClient, CliError } from "./client.js";
 import { publishCommand } from "./commands.js";
@@ -140,4 +141,10 @@ export async function runCli(argv: string[]): Promise<number> {
     process.stderr.write(`kiosk: ${err.message}\n`);
     return typeof err.exitCode === "number" ? err.exitCode : 1;
   }
+}
+
+// Run directly (tsx src/cli.ts … or node dist/cli.js …). Dormant when imported by
+// bin/kiosk.mjs, which calls runCli itself (argv[1] is the bin, not this module).
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  runCli(process.argv.slice(2)).then((code) => process.exit(code));
 }
