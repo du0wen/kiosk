@@ -1,7 +1,7 @@
 import { and, desc, eq, isNull, lt, sql } from "drizzle-orm";
 import { createHash } from "node:crypto";
 import { db } from "@/db";
-import { pages, type Page } from "@/db/schema";
+import { pages, pageVersion, type Page } from "@/db/schema";
 import { publicId } from "@/lib/id";
 
 const MAX_BYTES = 2 * 1024 * 1024; // 2 MB
@@ -37,6 +37,7 @@ export async function createPage(params: {
   userId: string;
   html: string;
   title?: string | null;
+  visibility?: "org" | "public";
 }): Promise<Page> {
   const size = sizeOf(params.html);
   if (size > MAX_BYTES) throw new PageTooLargeError();
@@ -50,26 +51,43 @@ export async function createPage(params: {
       contentHtml: params.html,
       sizeBytes: size,
       contentHash: hashOf(params.html),
+      visibility: params.visibility ?? "org",
     })
     .returning();
+  await db.insert(pageVersion).values({
+    pageId: row.id,
+    contentHtml: params.html,
+    title: row.title,
+    editedBy: params.userId,
+  });
   return row;
 }
 
 export async function updatePage(params: {
   publicId: string;
   organizationId: string;
+  userId: string;
   html: string;
   title?: string | null;
+  visibility?: "org" | "public";
 }): Promise<Page | null> {
   const size = sizeOf(params.html);
   if (size > MAX_BYTES) throw new PageTooLargeError();
+  const newHash = hashOf(params.html);
+  const existing = await getPage({
+    publicId: params.publicId,
+    organizationId: params.organizationId,
+  });
+  if (!existing) return null;
   const [row] = await db
     .update(pages)
     .set({
       contentHtml: params.html,
       sizeBytes: size,
-      contentHash: hashOf(params.html),
+      contentHash: newHash,
       title: params.title ?? extractTitle(params.html),
+      ...(params.visibility ? { visibility: params.visibility } : {}),
+      updatedBy: params.userId,
       updatedAt: new Date(),
     })
     .where(
@@ -80,6 +98,14 @@ export async function updatePage(params: {
       ),
     )
     .returning();
+  if (row && existing.contentHash !== newHash) {
+    await db.insert(pageVersion).values({
+      pageId: row.id,
+      contentHtml: params.html,
+      title: row.title,
+      editedBy: params.userId,
+    });
+  }
   return row ?? null;
 }
 
@@ -104,10 +130,11 @@ export async function getPage(params: {
 export async function softDeletePage(params: {
   publicId: string;
   organizationId: string;
+  userId: string;
 }): Promise<boolean> {
   const [row] = await db
     .update(pages)
-    .set({ deletedAt: new Date() })
+    .set({ deletedAt: new Date(), deletedBy: params.userId })
     .where(
       and(
         eq(pages.publicId, params.publicId),
@@ -117,6 +144,30 @@ export async function softDeletePage(params: {
     )
     .returning({ id: pages.id });
   return !!row;
+}
+
+export async function setPageVisibility(params: {
+  publicId: string;
+  organizationId: string;
+  userId: string;
+  visibility: "org" | "public";
+}): Promise<Page | null> {
+  const [row] = await db
+    .update(pages)
+    .set({
+      visibility: params.visibility,
+      updatedBy: params.userId,
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(pages.publicId, params.publicId),
+        eq(pages.organizationId, params.organizationId),
+        isNull(pages.deletedAt),
+      ),
+    )
+    .returning();
+  return row ?? null;
 }
 
 export async function listPages(params: {
