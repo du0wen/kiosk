@@ -5,7 +5,7 @@
 ## 当前状态
 - **P1 代码完成(6 份计划 + 4b′ oidc 登录重构全部落地)**:1 Foundation · 2 Publish API · 3 Serving · 4 CLI · 4b′ CLI oidc 登录(Better Auth oidcProvider,取代自定义 cli-auth)· 5 Skill 打包 · 6 Console+i18n。**77 测试通过,build 干净。**
 - 全链路:AI 装 skill → 生成自包含 HTML → `kiosk publish`(`kiosk login` = oidcProvider 授权码+PKCE+loopback,登录后换发长效 `kiosk_live_` token;或 `KIOSK_TOKEN`)→ REST v1 存 Neon → `/p/<id>` 严格 CSP serving;控制台管理页面/token(EN/ZH)。
-- **端到端未跑通(需手动 + 凭据)**:OAuth 登录、CLI oidc 登录、真实 publish→serving —— 都需 GitHub/Google OAuth 凭据 + 浏览器;服务端 oidc 端点已冒烟(discovery / authorize→/sign-in / mint 401)。部署你自管。
+- **端到端已跑通(真人真机验证)**:`kiosk login`(oidc + Google)→ `kiosk publish` → 浏览器访问 `SERVE_ORIGIN/p/<id>`(严格 CSP)全链路 OK。部署你自管。
 - Spec(定稿):`docs/specs/2026-07-08-kiosk-p1-publish-core-design.md` —— **动非平凡代码前先读它**。实现计划见 `docs/plans/`。
 
 ## 上线待办
@@ -18,6 +18,13 @@ TypeScript · pnpm · Next.js(App Router,单应用)· Drizzle ORM · Neon Postgr
 - `pnpm dev` / `pnpm build` / `pnpm start`
 - `pnpm test`(Vitest,`*.test.ts`)/ `pnpm test:watch`
 - `pnpm db:generate` + `pnpm db:migrate`(Drizzle) / `pnpm auth:generate`(Better Auth schema)
+- CLI 本地跑:`node cli/bin/kiosk.mjs <cmd>`(需先 `pnpm -C cli build`)或免构建 `pnpm exec tsx cli/src/cli.ts <cmd>`。
+
+## 本地 dev serving(两源同端口)
+app 与 serving 是两个 origin(cookie 隔离),本地用**同端口不同 hostname**,一个 dev server 全包:
+- `.env`:`SERVE_ORIGIN=http://serve.kiosk.test:58671`(APP 仍 `localhost:58671`,故 OAuth 回调/CLI apiBase 不变)。
+- `/etc/hosts` 加 `127.0.0.1  serve.kiosk.test`(用 `.test`,别用 `.local`——macOS mDNS 会拦)。
+- 页面看 `http://serve.kiosk.test:58671/p/<id>`;app 的 `/p/*` 会 302 到该域。
 
 ## 硬约束(始终生效)
 - **提交/PR 不带任何 AI 署名**(无 Co-Authored-By、无 "Generated with…")。
