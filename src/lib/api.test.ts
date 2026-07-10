@@ -23,6 +23,7 @@ describe("requireToken", () => {
     const id = await requireToken(reqWithAuth(principal.token));
     expect(id.organizationId).toBe(principal.organizationId);
     expect(id.userId).toBe(principal.userId);
+    expect(id.role).toBe("owner");
   });
   it("throws ApiError 401 when the header is missing", async () => {
     await expect(requireToken(reqWithAuth())).rejects.toMatchObject({

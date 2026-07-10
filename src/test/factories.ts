@@ -32,3 +32,28 @@ export async function cleanupPrincipal(p: {
   await db.delete(organization).where(eq(organization.id, p.organizationId));
   await db.delete(user).where(eq(user.id, p.userId));
 }
+
+/** Add an extra user with a given role to an existing org; returns a token for them. */
+export async function addMember(
+  organizationId: string,
+  role: "owner" | "admin" | "member",
+): Promise<{ userId: string; token: string }> {
+  const userId = uuidv7();
+  await db.insert(user).values({
+    id: userId,
+    name: `M ${userId}`,
+    email: `${userId}@t.local`,
+    emailVerified: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+  await db.insert(member).values({
+    id: uuidv7(),
+    organizationId,
+    userId,
+    role,
+    createdAt: new Date(),
+  });
+  const { plaintext } = await createToken({ userId, organizationId, name: "test" });
+  return { userId, token: plaintext };
+}

@@ -1,4 +1,8 @@
 import { verifyToken } from "@/lib/token";
+import { db } from "@/db";
+import { member } from "@/db/schema";
+import { and, eq } from "drizzle-orm";
+import type { Role } from "@/lib/permissions";
 
 export class ApiError extends Error {
   constructor(
@@ -29,10 +33,10 @@ export function json(data: unknown, status = 200): Response {
   return Response.json(data, { status });
 }
 
-/** Verify the Bearer token; return caller identity or throw ApiError(401). */
+/** Verify the Bearer token; return caller identity + org role, or throw ApiError. */
 export async function requireToken(
   req: Request,
-): Promise<{ userId: string; organizationId: string }> {
+): Promise<{ userId: string; organizationId: string; role: Role }> {
   const header = req.headers.get("authorization") ?? "";
   const match = header.match(/^Bearer\s+(.+)$/i);
   if (!match) throw new ApiError(401, "unauthorized", "Missing Bearer token");
@@ -40,5 +44,22 @@ export async function requireToken(
   if (!identity) {
     throw new ApiError(401, "unauthorized", "Invalid or revoked token");
   }
-  return { userId: identity.userId, organizationId: identity.organizationId };
+  const [m] = await db
+    .select({ role: member.role })
+    .from(member)
+    .where(
+      and(
+        eq(member.userId, identity.userId),
+        eq(member.organizationId, identity.organizationId),
+      ),
+    )
+    .limit(1);
+  if (!m) {
+    throw new ApiError(403, "forbidden", "Not a member of this organization");
+  }
+  return {
+    userId: identity.userId,
+    organizationId: identity.organizationId,
+    role: m.role as Role,
+  };
 }
