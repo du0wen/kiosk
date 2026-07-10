@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { member } from "@/db/schema";
+import type { Role } from "@/lib/permissions";
 
 /** The user's organization id (P1: single membership), or null. */
 export async function resolveUserOrg(userId: string): Promise<string | null> {
@@ -10,6 +11,18 @@ export async function resolveUserOrg(userId: string): Promise<string | null> {
     .where(eq(member.userId, userId))
     .limit(1);
   return m?.organizationId ?? null;
+}
+
+/** The user's org id + role (for console authz), or null. */
+export async function resolveUserOrgRole(
+  userId: string,
+): Promise<{ organizationId: string; role: Role } | null> {
+  const [m] = await db
+    .select({ organizationId: member.organizationId, role: member.role })
+    .from(member)
+    .where(eq(member.userId, userId))
+    .limit(1);
+  return m ? { organizationId: m.organizationId, role: m.role as Role } : null;
 }
 
 /** Platform admins are configured via the KIOSK_ADMIN_EMAILS env allowlist. */

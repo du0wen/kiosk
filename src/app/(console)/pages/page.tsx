@@ -2,8 +2,15 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
 import { getSession } from "@/lib/session";
-import { resolveUserOrg } from "@/lib/console";
-import { listPages, renameTitle, softDeletePage, pageUrl } from "@/lib/pages";
+import { resolveUserOrg, resolveUserOrgRole } from "@/lib/console";
+import {
+  listPages,
+  renameTitle,
+  softDeletePage,
+  getPage,
+  pageUrl,
+} from "@/lib/pages";
+import { can } from "@/lib/permissions";
 import { LocaleSwitcher } from "@/app/_components/LocaleSwitcher";
 import { CopyButton } from "@/app/_components/CopyButton";
 
@@ -26,11 +33,25 @@ export default async function PagesPage() {
   async function remove(formData: FormData) {
     "use server";
     const s = await getSession();
-    const o = s && (await resolveUserOrg(s.user.id));
-    if (!o) return;
-    await softDeletePage({
+    if (!s) return;
+    const ctx = await resolveUserOrgRole(s.user.id);
+    if (!ctx) return;
+    const page = await getPage({
       publicId: String(formData.get("id")),
-      organizationId: o,
+      organizationId: ctx.organizationId,
+    });
+    if (!page) return;
+    if (
+      !can(ctx.role, "page.delete", {
+        isResourceOwner: page.createdBy === s.user.id,
+      })
+    ) {
+      return;
+    }
+    await softDeletePage({
+      publicId: page.publicId,
+      organizationId: ctx.organizationId,
+      userId: s.user.id,
     });
     revalidatePath("/pages");
   }

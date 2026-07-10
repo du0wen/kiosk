@@ -1,21 +1,33 @@
 import { requireToken, errorResponse, json, ApiError } from "@/lib/api";
 import { createPage, listPages, pageUrl, PageTooLargeError } from "@/lib/pages";
 
+function parseVisibility(v: string | null): "org" | "public" | undefined {
+  if (v === "org" || v === "public") return v;
+  return undefined;
+}
+
 export async function POST(req: Request): Promise<Response> {
   try {
     const { userId, organizationId } = await requireToken(req);
     const html = await req.text();
     if (!html.trim()) throw new ApiError(400, "bad_request", "Empty body");
     const title = req.headers.get("x-kiosk-title");
+    const visibility = parseVisibility(req.headers.get("x-kiosk-visibility"));
     try {
       const page = await createPage({
         organizationId,
         userId,
         html,
         title: title ?? undefined,
+        visibility,
       });
       return json(
-        { id: page.publicId, url: pageUrl(page.publicId), createdAt: page.createdAt },
+        {
+          id: page.publicId,
+          url: pageUrl(page.publicId),
+          visibility: page.visibility,
+          createdAt: page.createdAt,
+        },
         201,
       );
     } catch (e) {
