@@ -24,7 +24,7 @@
 
 **Files:**
 - Modify: `src/db/schema/pages.ts` (add `visibility`, `updatedBy`, `deletedBy`; add `pageVersion` table)
-- Create: `src/db/schema/pages.test.ts`
+- Create: `src/db/pages-schema.test.ts` (NOT under `src/db/schema/` — drizzle-kit globs that dir as schema and would try to load the test)
 - Generate: one schema migration (`pnpm db:generate`) + one custom backfill migration
 
 **Interfaces:**
@@ -32,7 +32,7 @@
   - `pages.visibility: 'org' | 'public'` (NOT NULL, default `'org'`), `pages.updatedBy: string | null`, `pages.deletedBy: string | null`.
   - `pageVersion` table + `PageVersion` type: `{ id, pageId, contentHtml, title, editedBy, createdAt }`.
 
-- [ ] **Step 1: Write the failing test `src/db/schema/pages.test.ts`**
+- [ ] **Step 1: Write the failing test `src/db/pages-schema.test.ts`**
 
 ```typescript
 import { describe, it, expect, afterEach } from "vitest";
@@ -108,7 +108,7 @@ describe("page_version", () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pnpm exec vitest run src/db/schema/pages.test.ts`
+Run: `pnpm exec vitest run src/db/pages-schema.test.ts`
 Expected: FAIL — `pageVersion` is not exported / `visibility` missing.
 
 - [ ] **Step 3: Edit `src/db/schema/pages.ts`**
@@ -219,7 +219,7 @@ Expected: `migrations applied successfully`.
 
 - [ ] **Step 7: Run the test to verify it passes**
 
-Run: `pnpm exec vitest run src/db/schema/pages.test.ts`
+Run: `pnpm exec vitest run src/db/pages-schema.test.ts`
 Expected: PASS (2 tests). A freshly inserted page defaults `visibility='org'`; `page_version` insert/select works.
 
 - [ ] **Step 8: Verify the backfill hit the existing page**
@@ -242,7 +242,7 @@ Expected: existing page(s) show `visibility = public` (backfill worked).
 - [ ] **Step 9: Commit**
 
 ```bash
-git add src/db/schema/pages.ts src/db/schema/pages.test.ts drizzle/
+git add src/db/schema/pages.ts src/db/pages-schema.test.ts drizzle/
 git commit -m "feat: page visibility + edit/delete attribution + page_version table"
 ```
 

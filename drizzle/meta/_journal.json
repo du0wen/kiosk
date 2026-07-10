@@ -43,6 +43,20 @@
       "when": 1783612975032,
       "tag": "0005_seed_kiosk_cli_client",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1783672848485,
+      "tag": "0006_short_loki",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1783672858585,
+      "tag": "0007_backfill_visibility_public",
+      "breakpoints": true
     }
   ]
 }
