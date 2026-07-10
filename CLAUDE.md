@@ -8,6 +8,9 @@
 - **端到端未跑通(需手动 + 凭据)**:OAuth 登录、CLI oidc 登录、真实 publish→serving —— 都需 GitHub/Google OAuth 凭据 + 浏览器;服务端 oidc 端点已冒烟(discovery / authorize→/sign-in / mint 401)。部署你自管。
 - Spec(定稿):`docs/specs/2026-07-08-kiosk-p1-publish-core-design.md` —— **动非平凡代码前先读它**。实现计划见 `docs/plans/`。
 
+## 上线待办
+- **CLI `DEFAULT_API_BASE`**(`cli/src/config.ts`):现为占位 `http://localhost:3000/api/v1`(既非本地 58671 也非线上域名)。正式发布前改成线上 API 域名 `https://<域名>/api/v1`,用户装完 CLI 不设 env、`kiosk login` 即直连生产。覆盖优先级 `KIOSK_API_BASE`(env)> `~/.config/kiosk/config.json` 的 `apiBase`(login 时持久化)> 该默认值;本地调试用前两者。域名待定。
+
 ## 技术栈
 TypeScript · pnpm · Next.js(App Router,单应用)· Drizzle ORM · Neon Postgres(`drizzle-orm/neon-serverless`)· Better Auth(organization 插件)+ 自定义 API token · Vitest。部署 Vercel + Neon(可移植 Docker)。
 
