@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { member } from "@/db/schema";
 import type { Role } from "@/lib/permissions";
@@ -23,6 +23,21 @@ export async function resolveUserOrgRole(
     .where(eq(member.userId, userId))
     .limit(1);
   return m ? { organizationId: m.organizationId, role: m.role as Role } : null;
+}
+
+/** True if the user is a member of the given org. */
+export async function isOrgMember(
+  userId: string,
+  organizationId: string,
+): Promise<boolean> {
+  const [m] = await db
+    .select({ id: member.id })
+    .from(member)
+    .where(
+      and(eq(member.userId, userId), eq(member.organizationId, organizationId)),
+    )
+    .limit(1);
+  return !!m;
 }
 
 /** Platform admins are configured via the KIOSK_ADMIN_EMAILS env allowlist. */
