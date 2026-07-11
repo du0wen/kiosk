@@ -1,12 +1,13 @@
 # Kiosk
 
-给 AI 编码工具(Claude Code / Codex 等)用的发布 skill:AI 生成**自包含 HTML** → 一键发布成**公开可分享链接**,支持同 URL 更新。补 Claude artifact「只能组织内看、无法公开分享」的短板。最终形态是多租户 SaaS(P1→P4)。
+给 AI 编码工具(Claude Code / Codex 等)用的发布 skill:AI 生成**自包含 HTML** → 一键发布成可分享链接(**默认组织私有,可显式设为公开**),支持同 URL 更新。补 Claude artifact「只能组织内看、无法公开分享」的短板。最终形态是多租户 SaaS(P1→P4)。
 
 ## 当前状态
 - **P1 代码完成(6 份计划 + 4b′ oidc 登录重构全部落地)**:1 Foundation · 2 Publish API · 3 Serving · 4 CLI · 4b′ CLI oidc 登录(Better Auth oidcProvider,取代自定义 cli-auth)· 5 Skill 打包 · 6 Console+i18n。**77 测试通过,build 干净。**
 - 全链路:AI 装 skill → 生成自包含 HTML → `kiosk publish`(`kiosk login` = oidcProvider 授权码+PKCE+loopback,登录后换发长效 `kiosk_live_` token;或 `KIOSK_TOKEN`)→ REST v1 存 Neon → `/p/<id>` 严格 CSP serving;控制台管理页面/token(EN/ZH)。
 - **端到端已跑通(真人真机验证)**:`kiosk login`(oidc + Google)→ `kiosk publish` → 浏览器访问 `SERVE_ORIGIN/p/<id>`(严格 CSP)全链路 OK。部署你自管。
-- Spec(定稿):`docs/specs/2026-07-08-kiosk-p1-publish-core-design.md` —— **动非平凡代码前先读它**。实现计划见 `docs/plans/`。
+- **P2 代码完成(5 份计划全部落地)**:组织与权限 —— 多成员 org + active org 切换、链接式邀请(`/invite/[id]`)、角色鉴权(owner/admin/member;member 只能删/改自己建的页)、**页面可见性**(默认 `org` 私有 / 显式 `public`;org 页经 **serve 源签名令牌门**鉴权,serve 仍 0 cookie)、页面版本快照(只读历史)。CLI 加 `--public`/`share`/whoami role;控制台加成员页/可见性开关/历史。**102 测试通过,build + cli tsc 干净。** P2 手动 e2e(邀请、org 页登录门)需浏览器 + 第二账号,未跑。
+- Spec:P1 `docs/specs/2026-07-08-kiosk-p1-publish-core-design.md`、P2 `docs/specs/2026-07-10-kiosk-p2-orgs-permissions-design.md` —— **动非平凡代码前先读**。实现计划见 `docs/plans/`。
 
 ## 上线待办
 - **CLI `DEFAULT_API_BASE`**(`cli/src/config.ts`):现为占位 `http://localhost:3000/api/v1`(既非本地 58671 也非线上域名)。正式发布前改成线上 API 域名 `https://<域名>/api/v1`,用户装完 CLI 不设 env、`kiosk login` 即直连生产。覆盖优先级 `KIOSK_API_BASE`(env)> `~/.config/kiosk/config.json` 的 `apiBase`(login 时持久化)> 该默认值;本地调试用前两者。域名待定。
