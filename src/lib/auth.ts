@@ -36,6 +36,19 @@ export const auth = betterAuth({
         },
       },
     },
+    session: {
+      create: {
+        before: async (session) => {
+          // Default the active org to the user's personal org so org-scoped ops
+          // + the console have a current org immediately after login.
+          const { resolveUserOrg } = await import("./console");
+          const org = await resolveUserOrg(session.userId);
+          return {
+            data: { ...session, activeOrganizationId: org ?? undefined },
+          };
+        },
+      },
+    },
   },
   plugins: [
     organization(),

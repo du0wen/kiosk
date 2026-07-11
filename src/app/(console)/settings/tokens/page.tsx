@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
 import { getSession } from "@/lib/session";
-import { resolveUserOrg } from "@/lib/console";
+import { resolveActiveOrg } from "@/lib/console";
 import { createToken, listTokens, revokeToken } from "@/lib/token";
 import { CopyButton } from "@/app/_components/CopyButton";
 
@@ -13,7 +13,7 @@ export default async function TokensPage({
 }) {
   const session = await getSession();
   if (!session) redirect("/sign-in?callback=/settings/tokens");
-  const org = await resolveUserOrg(session.user.id);
+  const org = await resolveActiveOrg(session);
   if (!org) redirect("/sign-in");
   const t = await getTranslations("tokens");
   const { created } = await searchParams;
@@ -22,7 +22,7 @@ export default async function TokensPage({
   async function create(formData: FormData) {
     "use server";
     const s = await getSession();
-    const o = s && (await resolveUserOrg(s.user.id));
+    const o = s && (await resolveActiveOrg(s));
     if (!o || !s) return;
     const { plaintext } = await createToken({
       userId: s.user.id,
@@ -34,7 +34,7 @@ export default async function TokensPage({
   async function revoke(formData: FormData) {
     "use server";
     const s = await getSession();
-    const o = s && (await resolveUserOrg(s.user.id));
+    const o = s && (await resolveActiveOrg(s));
     if (!o) return;
     await revokeToken(String(formData.get("id")), o);
     revalidatePath("/settings/tokens");

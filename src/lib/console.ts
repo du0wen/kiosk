@@ -13,16 +13,29 @@ export async function resolveUserOrg(userId: string): Promise<string | null> {
   return m?.organizationId ?? null;
 }
 
-/** The user's org id + role (for console authz), or null. */
-export async function resolveUserOrgRole(
+/** The org to act on in the console: the session's active org, else first membership. */
+export async function resolveActiveOrg(session: {
+  user: { id: string };
+  session: { activeOrganizationId?: string | null };
+}): Promise<string | null> {
+  return (
+    session.session.activeOrganizationId ?? (await resolveUserOrg(session.user.id))
+  );
+}
+
+/** The user's role in a specific org, or null if not a member. */
+export async function roleInOrg(
   userId: string,
-): Promise<{ organizationId: string; role: Role } | null> {
+  organizationId: string,
+): Promise<Role | null> {
   const [m] = await db
-    .select({ organizationId: member.organizationId, role: member.role })
+    .select({ role: member.role })
     .from(member)
-    .where(eq(member.userId, userId))
+    .where(
+      and(eq(member.userId, userId), eq(member.organizationId, organizationId)),
+    )
     .limit(1);
-  return m ? { organizationId: m.organizationId, role: m.role as Role } : null;
+  return m ? (m.role as Role) : null;
 }
 
 /** True if the user is a member of the given org. */

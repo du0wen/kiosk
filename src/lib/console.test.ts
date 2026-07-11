@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { resolveUserOrg, isAdminEmail } from "./console";
+import { resolveUserOrg, resolveActiveOrg, isAdminEmail } from "./console";
 import { createPrincipal, cleanupPrincipal } from "@/test/factories";
 
 let principal: { userId: string; organizationId: string; token: string } | null =
@@ -18,6 +18,25 @@ describe("resolveUserOrg", () => {
   });
   it("returns null for an unknown user", async () => {
     expect(await resolveUserOrg("nobody")).toBeNull();
+  });
+});
+
+describe("resolveActiveOrg", () => {
+  it("prefers the session's activeOrganizationId", async () => {
+    principal = await createPrincipal();
+    const org = await resolveActiveOrg({
+      user: { id: principal.userId },
+      session: { activeOrganizationId: "explicit-org" },
+    });
+    expect(org).toBe("explicit-org");
+  });
+  it("falls back to the user's first membership when unset", async () => {
+    principal = await createPrincipal();
+    const org = await resolveActiveOrg({
+      user: { id: principal.userId },
+      session: { activeOrganizationId: null },
+    });
+    expect(org).toBe(principal.organizationId);
   });
 });
 

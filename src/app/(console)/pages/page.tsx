@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
 import { getSession } from "@/lib/session";
-import { resolveUserOrg, resolveUserOrgRole } from "@/lib/console";
+import { resolveActiveOrg, roleInOrg } from "@/lib/console";
 import {
   listPages,
   renameTitle,
@@ -17,7 +17,7 @@ import { CopyButton } from "@/app/_components/CopyButton";
 export default async function PagesPage() {
   const session = await getSession();
   if (!session) redirect("/sign-in?callback=/pages");
-  const org = await resolveUserOrg(session.user.id);
+  const org = await resolveActiveOrg(session);
   if (!org) redirect("/sign-in");
   const t = await getTranslations("pages");
   const { items } = await listPages({ organizationId: org });
@@ -25,7 +25,7 @@ export default async function PagesPage() {
   async function rename(formData: FormData) {
     "use server";
     const s = await getSession();
-    const o = s && (await resolveUserOrg(s.user.id));
+    const o = s && (await resolveActiveOrg(s));
     if (!o) return;
     await renameTitle(String(formData.get("id")), o, String(formData.get("title")));
     revalidatePath("/pages");
@@ -34,15 +34,17 @@ export default async function PagesPage() {
     "use server";
     const s = await getSession();
     if (!s) return;
-    const ctx = await resolveUserOrgRole(s.user.id);
-    if (!ctx) return;
+    const org = await resolveActiveOrg(s);
+    if (!org) return;
+    const role = await roleInOrg(s.user.id, org);
+    if (!role) return;
     const page = await getPage({
       publicId: String(formData.get("id")),
-      organizationId: ctx.organizationId,
+      organizationId: org,
     });
     if (!page) return;
     if (
-      !can(ctx.role, "page.delete", {
+      !can(role, "page.delete", {
         isResourceOwner: page.createdBy === s.user.id,
       })
     ) {
@@ -50,7 +52,7 @@ export default async function PagesPage() {
     }
     await softDeletePage({
       publicId: page.publicId,
-      organizationId: ctx.organizationId,
+      organizationId: org,
       userId: s.user.id,
     });
     revalidatePath("/pages");
