@@ -8,6 +8,7 @@ import {
   softDeletePage,
   setPageVisibility,
   listPages,
+  listPageVersions,
   PageTooLargeError,
 } from "./pages";
 import { createPrincipal, cleanupPrincipal } from "@/test/factories";
@@ -202,6 +203,33 @@ describe("pages service P2", () => {
       const [row] = await db.select().from(pages).where(eq(pages.id, page.id));
       expect(row.deletedBy).toBe(p.userId);
       expect(row.deletedAt).not.toBeNull();
+    } finally {
+      await cleanupPrincipal(p);
+    }
+  });
+});
+
+describe("listPageVersions", () => {
+  it("returns versions newest-first with editor email", async () => {
+    const p = await createPrincipal();
+    try {
+      const page = await createPage({
+        organizationId: p.organizationId,
+        userId: p.userId,
+        html: "<h1>1</h1>",
+      });
+      await updatePage({
+        publicId: page.publicId,
+        organizationId: p.organizationId,
+        userId: p.userId,
+        html: "<h1>2</h1>",
+      });
+      const versions = await listPageVersions({
+        publicId: page.publicId,
+        organizationId: p.organizationId,
+      });
+      expect(versions).toHaveLength(2);
+      expect(versions[0].editedByEmail).toContain("@");
     } finally {
       await cleanupPrincipal(p);
     }

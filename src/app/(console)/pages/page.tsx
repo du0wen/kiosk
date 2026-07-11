@@ -7,6 +7,7 @@ import {
   listPages,
   renameTitle,
   softDeletePage,
+  setPageVisibility,
   getPage,
   pageUrl,
 } from "@/lib/pages";
@@ -54,6 +55,34 @@ export default async function PagesPage() {
       publicId: page.publicId,
       organizationId: org,
       userId: s.user.id,
+    });
+    revalidatePath("/pages");
+  }
+  async function setVis(formData: FormData) {
+    "use server";
+    const s = await getSession();
+    if (!s) return;
+    const org = await resolveActiveOrg(s);
+    if (!org) return;
+    const role = await roleInOrg(s.user.id, org);
+    if (!role) return;
+    const page = await getPage({
+      publicId: String(formData.get("id")),
+      organizationId: org,
+    });
+    if (!page) return;
+    if (
+      !can(role, "page.setVisibility", {
+        isResourceOwner: page.createdBy === s.user.id,
+      })
+    ) {
+      return;
+    }
+    await setPageVisibility({
+      publicId: page.publicId,
+      organizationId: org,
+      userId: s.user.id,
+      visibility: String(formData.get("to")) === "public" ? "public" : "org",
     });
     revalidatePath("/pages");
   }
@@ -111,6 +140,23 @@ export default async function PagesPage() {
                     <input type="hidden" name="id" value={p.publicId} />
                     <button type="submit">{t("delete")}</button>
                   </form>
+                  <span style={{ fontSize: 12, opacity: 0.7, alignSelf: "center" }}>
+                    {p.visibility === "public" ? t("public") : t("private")}
+                  </span>
+                  <form action={setVis}>
+                    <input type="hidden" name="id" value={p.publicId} />
+                    <input
+                      type="hidden"
+                      name="to"
+                      value={p.visibility === "public" ? "org" : "public"}
+                    />
+                    <button type="submit">
+                      {p.visibility === "public" ? t("makePrivate") : t("makePublic")}
+                    </button>
+                  </form>
+                  <a href={`/pages/${p.publicId}/history`}>
+                    <button type="button">{t("history")}</button>
+                  </a>
                 </div>
               </li>
             );

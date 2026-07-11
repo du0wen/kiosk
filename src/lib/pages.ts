@@ -1,7 +1,7 @@
 import { and, desc, eq, isNull, lt, sql } from "drizzle-orm";
 import { createHash } from "node:crypto";
 import { db } from "@/db";
-import { pages, pageVersion, type Page } from "@/db/schema";
+import { pages, pageVersion, user, type Page } from "@/db/schema";
 import { publicId } from "@/lib/id";
 
 const MAX_BYTES = 2 * 1024 * 1024; // 2 MB
@@ -193,6 +193,28 @@ export async function listPages(params: {
     ? items[items.length - 1].createdAt.toISOString()
     : null;
   return { items, nextCursor };
+}
+
+/** View-only version history for a page (newest first), with editor email. */
+export async function listPageVersions(params: {
+  publicId: string;
+  organizationId: string;
+}): Promise<{ id: string; createdAt: Date; editedByEmail: string | null }[]> {
+  const page = await getPage({
+    publicId: params.publicId,
+    organizationId: params.organizationId,
+  });
+  if (!page) return [];
+  return db
+    .select({
+      id: pageVersion.id,
+      createdAt: pageVersion.createdAt,
+      editedByEmail: user.email,
+    })
+    .from(pageVersion)
+    .leftJoin(user, eq(pageVersion.editedBy, user.id))
+    .where(eq(pageVersion.pageId, page.id))
+    .orderBy(desc(pageVersion.createdAt));
 }
 
 /** Active page by public_id, without org scoping — for public serving. */
