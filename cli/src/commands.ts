@@ -14,6 +14,7 @@ export type PublishArgs = {
   id?: string;
   forceNew?: boolean;
   title?: string;
+  visibility?: "org" | "public";
 };
 
 /** Create or update a page from a file; record the mapping; return the URL. */
@@ -33,8 +34,8 @@ export async function publishCommand(
 
   const result =
     identity.mode === "update"
-      ? await deps.client.update(identity.id, html, title)
-      : await deps.client.publish(html, title);
+      ? await deps.client.update(identity.id, html, title, args.visibility)
+      : await deps.client.publish(html, title, args.visibility);
 
   writeMapping(root, mappingKey(root, args.file), {
     id: result.id,

@@ -56,4 +56,21 @@ describe("KioskClient", () => {
     stubFetch(400, { error: { code: "bad_request", message: "Empty body" } });
     await expect(client().publish("")).rejects.toBeInstanceOf(CliError);
   });
+  it("publish with visibility sends the x-kiosk-visibility header", async () => {
+    const fn = stubFetch(201, { id: "a", url: "u", visibility: "public" });
+    await client().publish("<html></html>", "T", "public");
+    const [, init] = fn.mock.calls[0] as [
+      string,
+      RequestInit & { headers: Record<string, string> },
+    ];
+    expect(init.headers["x-kiosk-visibility"]).toBe("public");
+  });
+  it("setVisibility PATCHes a JSON body", async () => {
+    const fn = stubFetch(200, { id: "a", url: "u", visibility: "org" });
+    await client().setVisibility("abc", "org");
+    const [url, init] = fn.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("https://api.example/v1/pages/abc");
+    expect(init.method).toBe("PATCH");
+    expect(JSON.parse(init.body as string)).toEqual({ visibility: "org" });
+  });
 });

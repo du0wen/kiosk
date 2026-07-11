@@ -5,7 +5,7 @@ import { user, organization } from "@/db/schema";
 
 export async function GET(req: Request): Promise<Response> {
   try {
-    const { userId, organizationId } = await requireToken(req);
+    const { userId, organizationId, role } = await requireToken(req);
     const [u] = await db
       .select({ id: user.id, name: user.name, email: user.email })
       .from(user)
@@ -20,7 +20,7 @@ export async function GET(req: Request): Promise<Response> {
       .from(organization)
       .where(eq(organization.id, organizationId))
       .limit(1);
-    return json({ user: u ?? null, organization: org ?? null });
+    return json({ user: u ?? null, organization: org ?? null, role });
   } catch (e) {
     return errorResponse(e);
   }

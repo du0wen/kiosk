@@ -27,5 +27,6 @@ describe("GET /api/v1/me", () => {
     const body = await res.json();
     expect(body.user.id).toBe(principal.userId);
     expect(body.organization.id).toBe(principal.organizationId);
+    expect(body.role).toBe("owner");
   });
 });

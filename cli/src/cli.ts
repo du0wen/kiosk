@@ -7,11 +7,13 @@ import { publishCommand } from "./commands.js";
 const USAGE = `kiosk <command>
 
   login                 Log in via the browser (or --token <t> / KIOSK_TOKEN)
-  publish <file>        Publish/update an HTML file, prints the public URL
+  publish <file>        Publish/update an HTML file, prints the URL (private by default)
                           --id <id>   update a specific page
                           --new       force a new page
                           --title <t> override the title
+                          --public    publish as publicly viewable
                           --json      print JSON
+  share <id>            Set page visibility: --public | --private
   list                  List your pages
   open <file>           Open a published page in the browser
   delete <id>           Unpublish a page
@@ -67,6 +69,7 @@ export async function runCli(argv: string[]): Promise<number> {
             new: { type: "boolean" },
             title: { type: "string" },
             json: { type: "boolean" },
+            public: { type: "boolean" },
           },
         });
         const file = positionals[0];
@@ -74,11 +77,41 @@ export async function runCli(argv: string[]): Promise<number> {
         const { apiBase, token } = requireToken();
         const url = await publishCommand(
           { client: new KioskClient(apiBase, token), cwd: process.cwd() },
-          { file, id: values.id, forceNew: values.new, title: values.title },
+          {
+            file,
+            id: values.id,
+            forceNew: values.new,
+            title: values.title,
+            visibility: values.public ? "public" : undefined,
+          },
         );
         process.stdout.write(
           values.json ? JSON.stringify({ url }) + "\n" : url + "\n",
         );
+        if (!values.public && !values.json) {
+          process.stderr.write(
+            "(private to your org — add --public or use the console to share publicly)\n",
+          );
+        }
+        return 0;
+      }
+      case "share": {
+        const { values, positionals } = parseArgs({
+          args: rest,
+          allowPositionals: true,
+          options: { public: { type: "boolean" }, private: { type: "boolean" } },
+        });
+        const id = positionals[0];
+        if (!id) throw new CliError("Usage: kiosk share <id> --public | --private");
+        if (values.public === values.private) {
+          throw new CliError("Specify exactly one of --public or --private");
+        }
+        const { apiBase, token } = requireToken();
+        const r = await new KioskClient(apiBase, token).setVisibility(
+          id,
+          values.public ? "public" : "org",
+        );
+        process.stdout.write(`${r.url} (${String(r.visibility)})\n`);
         return 0;
       }
       case "list": {
