@@ -1,6 +1,7 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { GET } from "./route";
 import { createPage, softDeletePage } from "@/lib/pages";
+import { signServeToken } from "@/lib/serve-token";
 import { createPrincipal, cleanupPrincipal } from "@/test/factories";
 
 let principal: { userId: string; organizationId: string; token: string } | null =
@@ -16,12 +17,13 @@ const ctx = (publicId: string) => ({ params: Promise.resolve({ publicId }) });
 const req = (publicId: string) => new Request(`http://serve.local/p/${publicId}`);
 
 describe("GET /p/[publicId]", () => {
-  it("serves the HTML with strict CSP + noindex, and increments views", async () => {
+  it("serves a public page with strict CSP + noindex, and increments views", async () => {
     principal = await createPrincipal();
     const page = await createPage({
       organizationId: principal.organizationId,
       userId: principal.userId,
       html: "<html><title>Hello</title><body>hi</body></html>",
+      visibility: "public",
     });
 
     const res = await GET(req(page.publicId), ctx(page.publicId));
@@ -45,12 +47,61 @@ describe("GET /p/[publicId]", () => {
       organizationId: principal.organizationId,
       userId: principal.userId,
       html: "<html><title>Gone</title></html>",
+      visibility: "public",
     });
     await softDeletePage({
       publicId: page.publicId,
       organizationId: principal.organizationId,
+      userId: principal.userId,
     });
     const res = await GET(req(page.publicId), ctx(page.publicId));
     expect(res.status).toBe(404);
+  });
+});
+
+describe("/p gate (org visibility)", () => {
+  it("org page without a token redirects to serve-auth", async () => {
+    principal = await createPrincipal();
+    const page = await createPage({
+      organizationId: principal.organizationId,
+      userId: principal.userId,
+      html: "<h1>secret</h1>",
+    }); // default org
+    const res = await GET(req(page.publicId), ctx(page.publicId));
+    expect(res.status).toBe(302);
+    expect(res.headers.get("location")).toContain(
+      "/serve-auth?next=" + page.publicId,
+    );
+  });
+
+  it("org page with a valid matching token serves", async () => {
+    principal = await createPrincipal();
+    const page = await createPage({
+      organizationId: principal.organizationId,
+      userId: principal.userId,
+      html: "<h1>secret</h1>",
+    });
+    const k = signServeToken(principal.organizationId, principal.userId);
+    const res = await GET(
+      new Request(`http://serve.local/p/${page.publicId}?k=${k}`),
+      ctx(page.publicId),
+    );
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain("secret");
+  });
+
+  it("org page with a token for another org redirects", async () => {
+    principal = await createPrincipal();
+    const page = await createPage({
+      organizationId: principal.organizationId,
+      userId: principal.userId,
+      html: "<h1>secret</h1>",
+    });
+    const k = signServeToken("some-other-org", principal.userId);
+    const res = await GET(
+      new Request(`http://serve.local/p/${page.publicId}?k=${k}`),
+      ctx(page.publicId),
+    );
+    expect(res.status).toBe(302);
   });
 });
