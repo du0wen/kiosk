@@ -10,7 +10,12 @@
     "delete": "Delete",
     "views": "views",
     "updated": "Updated",
-    "confirmDelete": "Delete this page? The public link will stop working."
+    "confirmDelete": "Delete this page? The public link will stop working.",
+    "public": "Public",
+    "private": "Private",
+    "makePublic": "Make public",
+    "makePrivate": "Make private",
+    "history": "History"
   },
   "tokens": {
     "title": "API Tokens",
