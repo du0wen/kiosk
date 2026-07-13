@@ -1,5 +1,11 @@
 import { requireToken, errorResponse, json, ApiError } from "@/lib/api";
-import { createPage, listPages, pageUrl, PageTooLargeError } from "@/lib/pages";
+import {
+  createPage,
+  listPages,
+  pageShellUrl,
+  pageRawUrl,
+  PageTooLargeError,
+} from "@/lib/pages";
 
 function parseVisibility(v: string | null): "org" | "public" | undefined {
   if (v === "org" || v === "public") return v;
@@ -24,7 +30,8 @@ export async function POST(req: Request): Promise<Response> {
       return json(
         {
           id: page.publicId,
-          url: pageUrl(page.publicId),
+          url: pageShellUrl(page.publicId),
+          rawUrl: pageRawUrl(page.publicId),
           visibility: page.visibility,
           createdAt: page.createdAt,
         },
@@ -47,7 +54,8 @@ export async function GET(req: Request): Promise<Response> {
     return json({
       pages: items.map((p) => ({
         id: p.publicId,
-        url: pageUrl(p.publicId),
+        url: pageShellUrl(p.publicId),
+        rawUrl: pageRawUrl(p.publicId),
         title: p.title,
         sizeBytes: p.sizeBytes,
         viewCount: p.viewCount,

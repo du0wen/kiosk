@@ -1,7 +1,8 @@
 import { describe, it, expect, afterEach } from "vitest";
 import {
   extractTitle,
-  pageUrl,
+  pageShellUrl,
+  pageRawUrl,
   createPage,
   updatePage,
   getPage,
@@ -36,9 +37,12 @@ describe("extractTitle", () => {
   });
 });
 
-describe("pageUrl", () => {
-  it("joins SERVE_ORIGIN and /p/<id>", () => {
-    expect(pageUrl("abc123")).toBe(`${process.env.SERVE_ORIGIN}/p/abc123`);
+describe("page urls", () => {
+  it("rawUrl joins SERVE_ORIGIN /p/", () => {
+    expect(pageRawUrl("abc123")).toBe(`${process.env.SERVE_ORIGIN}/p/abc123`);
+  });
+  it("shellUrl joins APP_ORIGIN /v/", () => {
+    expect(pageShellUrl("abc123")).toBe(`${process.env.APP_ORIGIN}/v/abc123`);
   });
 });
 

@@ -4,7 +4,8 @@ import {
   updatePage,
   softDeletePage,
   setPageVisibility,
-  pageUrl,
+  pageShellUrl,
+  pageRawUrl,
   PageTooLargeError,
 } from "@/lib/pages";
 import { can } from "@/lib/permissions";
@@ -24,7 +25,8 @@ export async function GET(req: Request, { params }: Ctx): Promise<Response> {
     if (!page) throw new ApiError(404, "not_found", "Page not found");
     return json({
       id: page.publicId,
-      url: pageUrl(page.publicId),
+      url: pageShellUrl(page.publicId),
+      rawUrl: pageRawUrl(page.publicId),
       title: page.title,
       visibility: page.visibility,
       sizeBytes: page.sizeBytes,
@@ -57,7 +59,8 @@ export async function PUT(req: Request, { params }: Ctx): Promise<Response> {
       if (!page) throw new ApiError(404, "not_found", "Page not found");
       return json({
         id: page.publicId,
-        url: pageUrl(page.publicId),
+        url: pageShellUrl(page.publicId),
+        rawUrl: pageRawUrl(page.publicId),
         visibility: page.visibility,
         updatedAt: page.updatedAt,
       });
@@ -89,7 +92,8 @@ export async function PATCH(req: Request, { params }: Ctx): Promise<Response> {
     const updated = await setPageVisibility({ publicId: id, organizationId, userId, visibility });
     return json({
       id: updated!.publicId,
-      url: pageUrl(updated!.publicId),
+      url: pageShellUrl(updated!.publicId),
+      rawUrl: pageRawUrl(updated!.publicId),
       visibility: updated!.visibility,
     });
   } catch (e) {

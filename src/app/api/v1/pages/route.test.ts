@@ -33,7 +33,8 @@ describe("POST /api/v1/pages", () => {
     const res = await POST(post(principal.token, "<html><title>Hi</title></html>"));
     expect(res.status).toBe(201);
     const body = await res.json();
-    expect(body.url).toContain("/p/");
+    expect(body.url).toContain("/v/"); // shell URL
+    expect(body.rawUrl).toContain("/p/"); // raw content URL
     expect(body.id).toMatch(/^[0-9A-Za-z]{12}$/);
   });
   it("413 when body exceeds 2MB", async () => {
@@ -55,6 +56,7 @@ describe("GET /api/v1/pages", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.pages).toHaveLength(1);
-    expect(body.pages[0].url).toContain("/p/");
+    expect(body.pages[0].url).toContain("/v/");
+    expect(body.pages[0].rawUrl).toContain("/p/");
   });
 });

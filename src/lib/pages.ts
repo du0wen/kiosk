@@ -13,8 +13,14 @@ export class PageTooLargeError extends Error {
   }
 }
 
-export function pageUrl(pid: string): string {
+/** Raw content URL on the cookieless serve origin (iframe src + embeddable). */
+export function pageRawUrl(pid: string): string {
   return `${process.env.SERVE_ORIGIN}/p/${pid}`;
+}
+
+/** Branded shell URL on the app origin (the shareable link). */
+export function pageShellUrl(pid: string): string {
+  return `${process.env.APP_ORIGIN}/v/${pid}`;
 }
 
 /** First <title> text, trimmed and capped, else null. */
