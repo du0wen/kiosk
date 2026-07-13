@@ -8,9 +8,9 @@
 - **端到端已跑通(真人真机验证)**:`kiosk login`(oidc + Google)→ `kiosk publish` → 浏览器访问 `SERVE_ORIGIN/p/<id>`(严格 CSP)全链路 OK。部署你自管。
 - **P2 代码完成(5 份计划全部落地)**:组织与权限 —— 多成员 org + active org 切换、链接式邀请(`/invite/[id]`)、角色鉴权(owner/admin/member;member 只能删/改自己建的页)、**页面可见性**(默认 `org` 私有 / 显式 `public`;org 页经 **serve 源签名令牌门**鉴权,serve 仍 0 cookie)、页面版本快照(只读历史)。CLI 加 `--public`/`share`/whoami role;控制台加成员页/可见性开关/历史。**102 测试通过,build + cli tsc 干净。** P2 手动 e2e(邀请、org 页登录门)需浏览器 + 第二账号,未跑。
 - **Serving v2(品牌外壳)代码完成**:分享链接改为 app 域品牌外壳 **`/v/<id>`**,内嵌 `sandbox` iframe 指向独立 serve 域的裸 `/p/<id>`(照 Claude artifacts 同构:独立域 + sandbox 双层隔离)。org 页由外壳现签 serve-token;发布返回 `url`=外壳 + `rawUrl`=裸(`pageShellUrl`/`pageRawUrl`)。`/serve-auth` 降级为直连兜底。**103 测试通过。**
-- **P3 导出:app 侧完成(P3-1),渲染服务待做(P3-2)**:`GET /api/v1/pages/:id/export?format=md|html|pdf|png|jpeg`(token)+ 控制台 `/pages/:id/export`(session)+ Export▾ + CLI `kiosk export`;成员+归属鉴权。**MD/HTML 已可用**(本地 turndown);**PDF/PNG/JPEG 需 `render/` 微服务(P3-2,未建)** —— 缺它时优雅降级 502。口子在 `src/lib/export.ts` `renderRemote` + `render/README.md`(契约)。**117 测试通过。**
+- **P3 导出:全部完成(P3-1 app 侧 + P3-2 渲染服务)**:`GET /api/v1/pages/:id/export?format=md|html|pdf|png|jpeg`(token)+ 控制台 `/pages/:id/export`(session)+ Export▾ + CLI `kiosk export`;成员+归属鉴权。**MD/HTML** 本地 turndown;**PDF/PNG/JPEG** 经 `render/` 独立微服务(Playwright/Chromium 禁出网,`POST /render` + `x-render-secret`)。app 侧 `renderRemote` 未配置/不可达时优雅降级 502。**117 vitest 通过;`render/` 另有 6 个 node:test 契约测试(pdf/png 真渲染 + 禁网 + server 门)。跨进程集成已验证:app `exportPage` → 起 `render/server.mjs` → 五格式全通(pdf `%PDF`/png/jpeg 带水印)。**
 - **P4 组织主题/品牌代码完成**:`org_settings` 表(主题色 + 导出水印,hex 校验);`/settings` owner/admin 配置(`can("org.update")`);`/v` 外壳按所属 org 显品牌名(=`organization.name`)+ 主题色;导出水印 HTML 页脚即时生效、PDF/图透传渲染服务(待 P3-2)。文字+颜色,无 logo/blob。**测试通过。**
-- **路线图 P1–P4 全部设计+落地**(仅 **P3-2 渲染微服务**未建=PDF/图暂 502,+ 上线两项按需)。
+- **路线图 P1–P4 全部设计+落地完成**(含 P3-2 渲染微服务)。剩上线待办(域名 + `DEFAULT_API_BASE` + 部署 Vercel/Neon + `render/` 容器 + Google 回调注册),均你自管。
 - Spec:P1 `docs/specs/2026-07-08-kiosk-p1-publish-core-design.md`、P2 `docs/specs/2026-07-10-kiosk-p2-orgs-permissions-design.md`、Serving v2 `docs/specs/2026-07-12-kiosk-serving-v2-branded-shell-design.md`、P3 `docs/specs/2026-07-13-kiosk-p3-export-design.md`、P4 `docs/specs/2026-07-13-kiosk-p4-org-themes-design.md` —— **动非平凡代码前先读**。实现计划见 `docs/plans/`。
 
 ## 上线待办
@@ -52,5 +52,6 @@ app 与 serving 是两个 origin(cookie 隔离),本地用**同端口不同 hostn
 | 公开 serving | serving 路由 + `middleware.ts` | `serving.md` | 3 |
 | CLI | `cli/**` | `cli.md` | 4 |
 | 控制台 + i18n | `src/app/(console)/**`,`src/i18n/**` | `console.md` | 6 |
+| 渲染服务 | `render/**`(独立包,独立部署) | `render/README.md` | P3-2 |
 
 <!-- 维护者备注:root 只放"始终生效"的项;模块细节一律进 .claude/rules/ 的 path-scoped 文件,避免 root 膨胀(目标 <100 行)。 -->
