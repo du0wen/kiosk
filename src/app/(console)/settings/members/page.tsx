@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { InviteForm } from "@/app/_components/InviteForm";
 import { OrgControls } from "@/app/_components/OrgControls";
+import { MemberRow } from "@/app/_components/MemberRow";
 
 export default async function MembersPage() {
   const session = await getSession();
@@ -27,12 +28,14 @@ export default async function MembersPage() {
       <OrgControls />
       <ul style={{ listStyle: "none", padding: 0, display: "grid", gap: 8 }}>
         {members.map((m) => (
-          <li
+          <MemberRow
             key={m.id}
-            style={{ border: "1px solid #8883", borderRadius: 8, padding: 10 }}
-          >
-            <strong>{m.user?.email ?? m.userId}</strong> — {m.role}
-          </li>
+            memberId={m.id}
+            email={m.user?.email ?? m.userId}
+            role={m.role}
+            manage={manage}
+            isSelf={m.userId === session.user.id}
+          />
         ))}
       </ul>
       {manage && <InviteForm />}
