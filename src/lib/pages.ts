@@ -223,6 +223,27 @@ export async function listPageVersions(params: {
     .orderBy(desc(pageVersion.createdAt));
 }
 
+/** A specific version's stored HTML (org-scoped via the page), or null. */
+export async function getPageVersionContent(params: {
+  publicId: string;
+  organizationId: string;
+  versionId: string;
+}): Promise<string | null> {
+  const page = await getPage({
+    publicId: params.publicId,
+    organizationId: params.organizationId,
+  });
+  if (!page) return null;
+  const [v] = await db
+    .select({ html: pageVersion.contentHtml })
+    .from(pageVersion)
+    .where(
+      and(eq(pageVersion.id, params.versionId), eq(pageVersion.pageId, page.id)),
+    )
+    .limit(1);
+  return v?.html ?? null;
+}
+
 /** Active page by public_id, without org scoping — for public serving. */
 export async function getPublicPage(publicId: string): Promise<Page | null> {
   const [row] = await db

@@ -10,6 +10,7 @@ import {
   setPageVisibility,
   listPages,
   listPageVersions,
+  getPageVersionContent,
   PageTooLargeError,
 } from "./pages";
 import { createPrincipal, cleanupPrincipal } from "@/test/factories";
@@ -234,6 +235,38 @@ describe("listPageVersions", () => {
       });
       expect(versions).toHaveLength(2);
       expect(versions[0].editedByEmail).toContain("@");
+    } finally {
+      await cleanupPrincipal(p);
+    }
+  });
+});
+
+describe("getPageVersionContent", () => {
+  it("returns a version's html (org-scoped)", async () => {
+    const p = await createPrincipal();
+    try {
+      const page = await createPage({
+        organizationId: p.organizationId,
+        userId: p.userId,
+        html: "<h1>v1</h1>",
+      });
+      const versions = await listPageVersions({
+        publicId: page.publicId,
+        organizationId: p.organizationId,
+      });
+      const html = await getPageVersionContent({
+        publicId: page.publicId,
+        organizationId: p.organizationId,
+        versionId: versions[0].id,
+      });
+      expect(html).toBe("<h1>v1</h1>");
+      expect(
+        await getPageVersionContent({
+          publicId: page.publicId,
+          organizationId: "nope",
+          versionId: versions[0].id,
+        }),
+      ).toBeNull();
     } finally {
       await cleanupPrincipal(p);
     }
