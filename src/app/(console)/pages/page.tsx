@@ -157,6 +157,28 @@ export default async function PagesPage() {
                   <a href={`/pages/${p.publicId}/history`}>
                     <button type="button">{t("history")}</button>
                   </a>
+                  <details style={{ display: "inline-block" }}>
+                    <summary style={{ cursor: "pointer", listStyle: "none" }}>
+                      <span
+                        style={{
+                          border: "1px solid #8883",
+                          borderRadius: 6,
+                          padding: "2px 8px",
+                        }}
+                      >
+                        {t("export")} ▾
+                      </span>
+                    </summary>
+                    <div
+                      style={{ display: "flex", gap: 6, marginTop: 4, flexWrap: "wrap" }}
+                    >
+                      {["md", "html", "pdf", "png", "jpeg"].map((f) => (
+                        <a key={f} href={`/pages/${p.publicId}/export?format=${f}`}>
+                          {f}
+                        </a>
+                      ))}
+                    </div>
+                  </details>
                 </div>
               </li>
             );

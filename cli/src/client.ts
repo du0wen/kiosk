@@ -86,4 +86,30 @@ export class KioskClient {
   async me(): Promise<unknown> {
     return this.parse(await this.req("GET", "/me"));
   }
+  async exportFile(
+    id: string,
+    format: string,
+  ): Promise<{ data: Buffer; filename: string }> {
+    const res = await fetch(
+      `${this.apiBase}/pages/${id}/export?format=${format}`,
+      { headers: { authorization: `Bearer ${this.token}` } },
+    );
+    if (!res.ok) {
+      let message = `HTTP ${res.status}`;
+      try {
+        message =
+          ((await res.json()) as { error?: { message?: string } })?.error
+            ?.message ?? message;
+      } catch {
+        // non-JSON error body
+      }
+      throw new CliError(message, res.status === 401 ? 2 : 1);
+    }
+    const dispo = res.headers.get("content-disposition") ?? "";
+    const m = dispo.match(/filename="([^"]+)"/);
+    return {
+      data: Buffer.from(await res.arrayBuffer()),
+      filename: m?.[1] ?? `${id}.${format}`,
+    };
+  }
 }

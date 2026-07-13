@@ -15,7 +15,8 @@
     "private": "Private",
     "makePublic": "Make public",
     "makePrivate": "Make private",
-    "history": "History"
+    "history": "History",
+    "export": "Export"
   },
   "tokens": {
     "title": "API Tokens",

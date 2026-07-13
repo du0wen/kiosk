@@ -14,6 +14,7 @@ const USAGE = `kiosk <command>
                           --public    publish as publicly viewable
                           --json      print JSON
   share <id>            Set page visibility: --public | --private
+  export <id>           Export a page: --format md|html|pdf|png|jpeg [-o file]
   list                  List your pages
   open <file>           Open a published page in the browser
   delete <id>           Unpublish a page
@@ -112,6 +113,33 @@ export async function runCli(argv: string[]): Promise<number> {
           values.public ? "public" : "org",
         );
         process.stdout.write(`${r.url} (${String(r.visibility)})\n`);
+        return 0;
+      }
+      case "export": {
+        const { values, positionals } = parseArgs({
+          args: rest,
+          allowPositionals: true,
+          options: {
+            format: { type: "string" },
+            output: { type: "string", short: "o" },
+          },
+        });
+        const id = positionals[0];
+        const format = values.format ?? "pdf";
+        if (!id) {
+          throw new CliError("Usage: kiosk export <id> --format <fmt> [-o file]");
+        }
+        const { apiBase, token } = requireToken();
+        const { data } = await new KioskClient(apiBase, token).exportFile(id, format);
+        if (values.output) {
+          const { writeFileSync } = await import("node:fs");
+          writeFileSync(values.output, data);
+          process.stdout.write(`Saved ${values.output}\n`);
+        } else if (format === "md" || format === "html") {
+          process.stdout.write(data.toString("utf8"));
+        } else {
+          throw new CliError(`Binary format ${format} needs -o <file>`);
+        }
         return 0;
       }
       case "list": {
