@@ -9,7 +9,7 @@ import {
   softDeletePage,
   setPageVisibility,
   getPage,
-  pageUrl,
+  pageShellUrl,
 } from "@/lib/pages";
 import { can } from "@/lib/permissions";
 import { LocaleSwitcher } from "@/app/_components/LocaleSwitcher";
@@ -104,7 +104,7 @@ export default async function PagesPage() {
       ) : (
         <ul style={{ listStyle: "none", padding: 0, display: "grid", gap: 12 }}>
           {items.map((p) => {
-            const url = pageUrl(p.publicId);
+            const url = pageShellUrl(p.publicId);
             return (
               <li
                 key={p.publicId}
