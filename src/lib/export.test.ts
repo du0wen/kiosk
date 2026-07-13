@@ -70,3 +70,27 @@ describe("exportPage", () => {
     await expect(exportPage(page, "png")).rejects.toMatchObject({ status: 502 });
   });
 });
+
+describe("watermark", () => {
+  it("html appends an escaped footer when watermark set", async () => {
+    const r = await exportPage(page, "html", "ACME <secret>");
+    expect(String(r.body)).toContain(page.contentHtml);
+    expect(String(r.body)).toContain("ACME &lt;secret&gt;");
+  });
+  it("html unchanged when no watermark", async () => {
+    const r = await exportPage(page, "html", null);
+    expect(r.body).toBe(page.contentHtml);
+  });
+  it("pdf forwards the watermark to the render service", async () => {
+    const fetchMock = vi.fn(
+      async () => new Response(new Uint8Array([1]), { status: 200 }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    await exportPage(page, "pdf", "WM");
+    const init = fetchMock.mock.calls[0][1] as RequestInit;
+    expect(JSON.parse(init.body as string)).toMatchObject({
+      format: "pdf",
+      watermark: "WM",
+    });
+  });
+});

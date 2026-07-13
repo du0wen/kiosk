@@ -42,10 +42,21 @@ export function exportFilename(
   return `${slug || page.publicId}.${ext}`;
 }
 
+function escapeHtml(s: string): string {
+  return s.replace(
+    /[&<>"']/g,
+    (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
+        c
+      ]!,
+  );
+}
+
 /** POST the HTML to the render microservice; return the rendered bytes. */
 async function renderRemote(
   html: string,
   format: "pdf" | "png" | "jpeg",
+  watermark?: string | null,
 ): Promise<Buffer> {
   const base = process.env.RENDER_SERVICE_URL;
   if (!base) throw new ExportError(502, "Render service not configured");
@@ -57,7 +68,7 @@ async function renderRemote(
         "content-type": "application/json",
         "x-render-secret": process.env.RENDER_SHARED_SECRET ?? "",
       },
-      body: JSON.stringify({ html, format }),
+      body: JSON.stringify({ html, format, ...(watermark ? { watermark } : {}) }),
       signal: AbortSignal.timeout(30_000),
     });
   } catch (e) {
@@ -71,6 +82,7 @@ async function renderRemote(
 export async function exportPage(
   page: { publicId: string; title: string | null; contentHtml: string },
   format: ExportFormat,
+  watermark?: string | null,
 ): Promise<{ body: Buffer | string; contentType: string; ext: string }> {
   if (format === "md") {
     return {
@@ -80,12 +92,15 @@ export async function exportPage(
     };
   }
   if (format === "html") {
+    const footer = watermark
+      ? `\n<footer style="position:fixed;bottom:8px;right:12px;font:12px sans-serif;color:#8888;opacity:.7">${escapeHtml(watermark)}</footer>`
+      : "";
     return {
-      body: page.contentHtml,
+      body: page.contentHtml + footer,
       contentType: "text/html; charset=utf-8",
       ext: "html",
     };
   }
-  const body = await renderRemote(page.contentHtml, format);
+  const body = await renderRemote(page.contentHtml, format, watermark);
   return { body, contentType: RENDERED[format], ext: format };
 }

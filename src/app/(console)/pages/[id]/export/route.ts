@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/session";
 import { resolveActiveOrg } from "@/lib/console";
 import { getPage } from "@/lib/pages";
+import { getOrgSettings } from "@/lib/org-settings";
 import {
   exportPage,
   isExportFormat,
@@ -21,7 +22,8 @@ export async function GET(req: Request, { params }: Ctx): Promise<Response> {
   const page = await getPage({ publicId: id, organizationId: org });
   if (!page) return new Response("Not found", { status: 404 });
   try {
-    const { body, contentType, ext } = await exportPage(page, format);
+    const { exportWatermark } = await getOrgSettings(org);
+    const { body, contentType, ext } = await exportPage(page, format, exportWatermark);
     return new Response(body as BodyInit, {
       status: 200,
       headers: {

@@ -9,8 +9,9 @@
 ```
 POST /render
   Header: x-render-secret: <RENDER_SHARED_SECRET>     # 不匹配 → 401
-  Body (JSON): { html: string, format: "pdf"|"png"|"jpeg", viewport?: {width,height,deviceScaleFactor} }
+  Body (JSON): { html: string, format: "pdf"|"png"|"jpeg", watermark?: string, viewport?: {width,height,deviceScaleFactor} }
   200 → 二进制:application/pdf | image/png | image/jpeg
+  # watermark(P4):非空则在渲染结果上叠加该文字(如右下角淡灰);实现时做。
 ```
 
 ## 实现要点(P3-2 计划将展开)

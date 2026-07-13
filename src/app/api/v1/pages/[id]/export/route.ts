@@ -1,5 +1,6 @@
 import { requireToken, errorResponse, ApiError } from "@/lib/api";
 import { getPage } from "@/lib/pages";
+import { getOrgSettings } from "@/lib/org-settings";
 import {
   exportPage,
   isExportFormat,
@@ -20,7 +21,8 @@ export async function GET(req: Request, { params }: Ctx): Promise<Response> {
     const page = await getPage({ publicId: id, organizationId });
     if (!page) throw new ApiError(404, "not_found", "Page not found");
     try {
-      const { body, contentType, ext } = await exportPage(page, format);
+      const { exportWatermark } = await getOrgSettings(organizationId);
+      const { body, contentType, ext } = await exportPage(page, format, exportWatermark);
       return new Response(body as BodyInit, {
         status: 200,
         headers: {
