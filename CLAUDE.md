@@ -7,7 +7,8 @@
 - 全链路:AI 装 skill → 生成自包含 HTML → `kiosk publish`(`kiosk login` = oidcProvider 授权码+PKCE+loopback,登录后换发长效 `kiosk_live_` token;或 `KIOSK_TOKEN`)→ REST v1 存 Neon → `/p/<id>` 严格 CSP serving;控制台管理页面/token(EN/ZH)。
 - **端到端已跑通(真人真机验证)**:`kiosk login`(oidc + Google)→ `kiosk publish` → 浏览器访问 `SERVE_ORIGIN/p/<id>`(严格 CSP)全链路 OK。部署你自管。
 - **P2 代码完成(5 份计划全部落地)**:组织与权限 —— 多成员 org + active org 切换、链接式邀请(`/invite/[id]`)、角色鉴权(owner/admin/member;member 只能删/改自己建的页)、**页面可见性**(默认 `org` 私有 / 显式 `public`;org 页经 **serve 源签名令牌门**鉴权,serve 仍 0 cookie)、页面版本快照(只读历史)。CLI 加 `--public`/`share`/whoami role;控制台加成员页/可见性开关/历史。**102 测试通过,build + cli tsc 干净。** P2 手动 e2e(邀请、org 页登录门)需浏览器 + 第二账号,未跑。
-- Spec:P1 `docs/specs/2026-07-08-kiosk-p1-publish-core-design.md`、P2 `docs/specs/2026-07-10-kiosk-p2-orgs-permissions-design.md` —— **动非平凡代码前先读**。实现计划见 `docs/plans/`。
+- **Serving v2(品牌外壳)代码完成**:分享链接改为 app 域品牌外壳 **`/v/<id>`**,内嵌 `sandbox` iframe 指向独立 serve 域的裸 `/p/<id>`(照 Claude artifacts 同构:独立域 + sandbox 双层隔离)。org 页由外壳现签 serve-token;发布返回 `url`=外壳 + `rawUrl`=裸(`pageShellUrl`/`pageRawUrl`)。`/serve-auth` 降级为直连兜底。**103 测试通过。**
+- Spec:P1 `docs/specs/2026-07-08-kiosk-p1-publish-core-design.md`、P2 `docs/specs/2026-07-10-kiosk-p2-orgs-permissions-design.md`、Serving v2 `docs/specs/2026-07-12-kiosk-serving-v2-branded-shell-design.md` —— **动非平凡代码前先读**。实现计划见 `docs/plans/`。
 
 ## 上线待办
 - **CLI `DEFAULT_API_BASE`**(`cli/src/config.ts`):现为占位 `http://localhost:3000/api/v1`(既非本地 58671 也非线上域名)。正式发布前改成线上 API 域名 `https://<域名>/api/v1`,用户装完 CLI 不设 env、`kiosk login` 即直连生产。覆盖优先级 `KIOSK_API_BASE`(env)> `~/.config/kiosk/config.json` 的 `apiBase`(login 时持久化)> 该默认值;本地调试用前两者。域名待定。
