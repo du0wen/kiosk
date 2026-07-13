@@ -23,6 +23,10 @@
 # cli build output
 /cli/dist/
 
+# render service (standalone package)
+/render/node_modules/
+/render/test-results/
+
 # misc
 .DS_Store
 *.pem
