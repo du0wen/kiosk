@@ -2,6 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { getPublicPage, pageRawUrl } from "@/lib/pages";
 import { isOrgMember } from "@/lib/console";
+import { getOrgBranding } from "@/lib/org-settings";
 import { signServeToken } from "@/lib/serve-token";
 
 type Props = { params: Promise<{ id: string }> };
@@ -25,6 +26,9 @@ export default async function ViewerPage({ params }: Props) {
   const { id } = await params;
   const page = await getPublicPage(id);
   if (!page) notFound();
+
+  const brand = await getOrgBranding(page.organizationId);
+  const accent = brand.themeColor ?? "#4f46e5";
 
   let src = pageRawUrl(id);
   if (page.visibility !== "public") {
@@ -53,8 +57,8 @@ export default async function ViewerPage({ params }: Props) {
 
   return (
     <div style={shell}>
-      <header style={bar}>
-        <strong style={{ color: "#4f46e5" }}>Kiosk</strong>
+      <header style={{ ...bar, borderBottomColor: accent }}>
+        <strong style={{ color: accent }}>{brand.name ?? "Kiosk"}</strong>
         <span style={{ opacity: 0.8 }}>{page.title ?? id}</span>
         <span style={{ marginLeft: "auto", display: "flex", gap: 12, opacity: 0.7 }}>
           <a href={pageRawUrl(id)} target="_blank" rel="noreferrer">
