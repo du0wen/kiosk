@@ -7,7 +7,6 @@ dist = true
 ci = ["github"]
 hosting = ["github"]
 installers = ["shell", "powershell", "npm"]
-publish-jobs = ["npm"]
 targets = [
   "aarch64-apple-darwin",
   "x86_64-apple-darwin",
