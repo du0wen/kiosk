@@ -1,5 +1,5 @@
 import { config as loadEnv } from "dotenv";
-import { RuntimeConfigError, parseRuntimeConfig } from "../src/lib/runtime-config";
+import { RuntimeConfigError, parseRuntimeConfig } from "../apps/web/src/lib/runtime-config";
 
 loadEnv({ path: ".env", quiet: true });
 

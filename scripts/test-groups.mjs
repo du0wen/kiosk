@@ -28,10 +28,11 @@ function walk(directory) {
 }
 
 export function collectTestGroups(root) {
-  const files = [join(root, "src"), join(root, "cli", "src")].flatMap(walk);
+  const webRoot = join(root, "apps", "web");
+  const files = walk(join(webRoot, "src"));
   const groups = { unit: [], db: [] };
   for (const absolutePath of files) {
-    const path = relative(root, absolutePath).replaceAll("\\", "/");
+    const path = relative(webRoot, absolutePath).replaceAll("\\", "/");
     groups[classifyTestFile(path, readFileSync(absolutePath, "utf8"))].push(path);
   }
   groups.unit.sort();

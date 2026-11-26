@@ -27,7 +27,7 @@ const groupArgs = group === "db"
   ? ["--reporter=verbose", "--testTimeout=30000", "--hookTimeout=30000"]
   : [];
 const result = spawnSync("pnpm", ["exec", "vitest", "run", ...groupArgs, ...files], {
-  cwd: root,
+  cwd: resolve(root, "apps/web"),
   stdio: "inherit",
   timeout: group === "db" ? 20 * 60_000 : 10 * 60_000,
   killSignal: "SIGTERM",

@@ -43,14 +43,13 @@ export function collectReleaseErrors(config) {
 
   const apiBases = [
     config.rustApiBase,
-    config.tsApiBase,
     config.contractApiBase,
   ];
   if (apiBases.some((value) => !isProductionApiBase(value))) {
     errors.push("Every CLI default must be a production HTTPS /api/v1 URL.");
   }
   if (new Set(apiBases).size !== 1) {
-    errors.push("Rust, TypeScript, and CLI API defaults disagree.");
+    errors.push("Rust and CLI API defaults disagree.");
   }
 
   if (config.releaseContractVersion !== 1) {
@@ -58,7 +57,7 @@ export function collectReleaseErrors(config) {
   }
 
   const releaseVersions = Object.values(config.releaseVersions ?? {});
-  if (releaseVersions.length !== 4 || new Set(releaseVersions).size !== 1) {
+  if (releaseVersions.length !== 3 || new Set(releaseVersions).size !== 1) {
     errors.push("The release unit versions disagree.");
   }
   const packageVersions = config.packageVersions ?? {};
@@ -99,7 +98,7 @@ function loadReleaseConfig() {
       "1",
       "--no-deps",
       "--manifest-path",
-      "cli-rs/Cargo.toml",
+      "packages/cli/Cargo.toml",
     ],
     { cwd: root, encoding: "utf8" },
   );
@@ -118,20 +117,19 @@ function loadReleaseConfig() {
     { cwd: root, encoding: "utf8" },
   );
   const contract = JSON.parse(
-    readFileSync(resolve(root, "cli/contract/v1.json"), "utf8"),
+    readFileSync(resolve(root, "packages/cli/contract/v1.json"), "utf8"),
   );
   const releaseContract = JSON.parse(
-    readFileSync(resolve(root, "release/contract.json"), "utf8"),
+    readFileSync(resolve(root, "scripts/release-contract.json"), "utf8"),
   );
-  const webPackage = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
+  const webPackage = JSON.parse(
+    readFileSync(resolve(root, "apps/web/package.json"), "utf8"),
+  );
   const renderPackage = JSON.parse(
-    readFileSync(resolve(root, "render/package.json"), "utf8"),
-  );
-  const typescriptCliPackage = JSON.parse(
-    readFileSync(resolve(root, "cli/package.json"), "utf8"),
+    readFileSync(resolve(root, "apps/render/package.json"), "utf8"),
   );
   const journal = JSON.parse(
-    readFileSync(resolve(root, "drizzle/meta/_journal.json"), "utf8"),
+    readFileSync(resolve(root, "apps/web/src/db/migrations/meta/_journal.json"), "utf8"),
   );
   const journalMigrationHead = journal.entries?.at(-1)?.tag ?? null;
 
@@ -139,11 +137,7 @@ function loadReleaseConfig() {
     repository: packageMetadata.repository,
     origin: originResult.status === 0 ? originResult.stdout.trim() : null,
     rustApiBase: readConstant(
-      resolve(root, "cli-rs/src/config.rs"),
-      "DEFAULT_API_BASE",
-    ),
-    tsApiBase: readConstant(
-      resolve(root, "cli/src/config.ts"),
+      resolve(root, "packages/cli/src/config.rs"),
       "DEFAULT_API_BASE",
     ),
     contractApiBase: contract.config.defaultApiBase,
@@ -152,7 +146,6 @@ function loadReleaseConfig() {
     packageVersions: {
       web: webPackage.version,
       render: renderPackage.version,
-      typescriptCli: typescriptCliPackage.version,
       rustCli: packageMetadata.version,
     },
     contractMigrationHead: releaseContract.migrationHead,
@@ -160,7 +153,9 @@ function loadReleaseConfig() {
     migrationFileExists: journalMigrationHead
       ? (() => {
           try {
-            readFileSync(resolve(root, `drizzle/${journalMigrationHead}.sql`));
+            readFileSync(
+              resolve(root, `apps/web/src/db/migrations/${journalMigrationHead}.sql`),
+            );
             return true;
           } catch {
             return false;

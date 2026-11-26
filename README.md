@@ -5,7 +5,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)](https://www.typescriptlang.org/)
-[![Rust CLI](https://img.shields.io/badge/CLI-Rust-orange)](cli-rs/)
+[![Rust CLI](https://img.shields.io/badge/CLI-Rust-orange)](packages/cli/)
 [![Model Context Protocol](https://img.shields.io/badge/MCP-2.0-green)](docs/mcp.md)
 
 ---
@@ -64,10 +64,7 @@ Pre-built binaries are available for macOS, Linux, and Windows:
 
 ```bash
 # Via Cargo
-cargo install --path cli-rs
-
-# Or use the TypeScript CLI wrapper
-pnpm --prefix cli build && npm install -g ./cli
+cargo install --path packages/cli
 ```
 
 ### 2. Login & Publish
@@ -138,37 +135,39 @@ For detailed configuration instructions including reverse proxy and domain setup
 - **Authentication:** Better Auth (OIDC, OAuth, Organization Plugins) + Scoped API Tokens
 - **Database & ORM:** PostgreSQL / Neon Serverless via Drizzle ORM
 - **Runtime Protection & Quotas:** Serverless Redis (@upstash/redis) rate limits and tenant quotas
-- **CLI:** Native Rust CLI (`cli-rs/`) with TypeScript fallback (`cli/`)
+- **CLI:** Native Rust CLI (`packages/cli/`) with cargo-dist shell, PowerShell, and npm installers
 - **Protocol:** Model Context Protocol (MCP) Stateless Web Standard Transport
-- **Isolated Rendering:** Node.js + Playwright Chromium sandbox (`render/`)
+- **Isolated Rendering:** Node.js + Playwright Chromium sandbox (`apps/render/`)
 
 ---
 
 ## 📂 Repository Structure
 
 ```
-├── cli/                # TypeScript CLI fallback & shared contract
-├── cli-rs/             # Native Rust CLI (publish, templates, export, auth)
-├── docs/               # User & operations documentation
-│   ├── self-hosting.md # Docker Compose, reverse proxy & setup wizard guide
-│   ├── mcp.md          # Model Context Protocol integration guide
-│   ├── legal/          # AUP, Terms of Service, Privacy Policy
-│   └── operations/     # Backup and restore runbook
-├── drizzle/            # PostgreSQL schema migrations
-├── messages/           # i18n message catalogs (EN / ZH)
-├── public/             # Brand icons and static assets
-├── release/            # Release contract manifest
-├── render/             # Isolated Chromium export rendering microservice
-├── scripts/            # Verification, migration, and smoke-test scripts
-├── src/
-│   ├── app/            # Next.js App Router (Console, Setup, Auth, API, MCP, Serving)
-│   ├── components/     # Design system & shared UI primitives
-│   ├── db/             # Drizzle schema definitions & connection pools
-│   ├── i18n/           # Internationalization configuration & locale routing
-│   └── lib/            # Core services (Auth, Storage, Watermark, Templates, Quota)
-├── docker-compose.yml  # Multi-container self-hosting orchestration
-├── SECURITY.md         # Security policy & architecture guarantees
-└── LICENSE             # MIT Open Source License
+├── apps/
+│   ├── web/                # Next.js web app (Console, Setup, Auth, REST v1, MCP, Serving)
+│   │   ├── src/
+│   │   │   ├── app/        # App Router routes
+│   │   │   ├── components/ # Design system & shared UI primitives
+│   │   │   ├── db/         # Drizzle schema & migrations
+│   │   │   ├── i18n/       # Internationalization & EN/ZH message catalogs
+│   │   │   ├── lib/        # Core services (Auth, Storage, Watermark, Templates, Quota)
+│   │   │   └── styles/     # Design tokens & base CSS
+│   │   ├── public/         # Brand icons & static assets
+│   │   └── Dockerfile      # Production container image
+│   └── render/             # Isolated Chromium export rendering microservice
+├── packages/
+│   └── cli/                # Native Rust CLI & shared agent skill contracts
+├── docs/                   # User & operations documentation
+│   ├── self-hosting.md     # Docker Compose, reverse proxy & setup wizard guide
+│   ├── mcp.md              # Model Context Protocol integration guide
+│   ├── legal/              # AUP, Terms of Service, Privacy Policy
+│   └── operations/         # Backup and restore runbook
+├── scripts/                # Verification, migration, release contract & smoke scripts
+├── docker-compose.yml      # Multi-container self-hosting orchestration
+├── pnpm-workspace.yaml     # pnpm monorepo workspace configuration
+├── SECURITY.md             # Security policy & architecture guarantees
+└── LICENSE                 # MIT Open Source License
 ```
 
 ---

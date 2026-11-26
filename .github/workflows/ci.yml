@@ -40,22 +40,6 @@ jobs:
       - run: pnpm verify:unit
       - run: pnpm verify:web
 
-  typescript-cli:
-    name: TypeScript CLI fallback
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10.33.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm -C cli build
-
   rust-cli:
     name: Rust CLI
     runs-on: ubuntu-latest
@@ -67,11 +51,11 @@ jobs:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: cli-rs
-      - run: cargo fmt --manifest-path cli-rs/Cargo.toml --check
-      - run: cargo clippy --manifest-path cli-rs/Cargo.toml --all-targets -- -D warnings
-      - run: cargo test --manifest-path cli-rs/Cargo.toml
-      - run: cargo build --release --manifest-path cli-rs/Cargo.toml
+          workspaces: packages/cli
+      - run: cargo fmt --manifest-path packages/cli/Cargo.toml --check
+      - run: cargo clippy --manifest-path packages/cli/Cargo.toml --all-targets -- -D warnings
+      - run: cargo test --manifest-path packages/cli/Cargo.toml
+      - run: cargo build --release --manifest-path packages/cli/Cargo.toml
 
   render:
     name: Render service
@@ -86,9 +70,9 @@ jobs:
         with:
           node-version: 20
           cache: pnpm
-          cache-dependency-path: render/pnpm-lock.yaml
-      - run: pnpm -C render install --frozen-lockfile
-      - run: pnpm -C render exec playwright install --with-deps chromium
+          cache-dependency-path: apps/render/pnpm-lock.yaml
+      - run: pnpm -C apps/render install --frozen-lockfile
+      - run: pnpm -C apps/render exec playwright install --with-deps chromium
       - run: pnpm verify:render
 
   neon:

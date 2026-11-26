@@ -125,7 +125,7 @@ server {
 
 ## 4. Render Microservice Isolation
 
-The rendering microservice (`render/`) uses Playwright to export HTML to PDF, PNG, and JPEG.
+The rendering microservice (`apps/render/`) uses Playwright to export HTML to PDF, PNG, and JPEG.
 In `docker-compose.yml`, the render container is attached to an **air-gapped network** (`internal: true`).
 This guarantees that rendered untrusted HTML can never initiate outbound requests or scan private networks.
 

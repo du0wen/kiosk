@@ -7,23 +7,20 @@ const valid = {
   repository: "https://github.com/acme/kiosk",
   origin: "git@github.com:acme/kiosk.git",
   rustApiBase: "https://kiosk.example/api/v1",
-  tsApiBase: "https://kiosk.example/api/v1",
   contractApiBase: "https://kiosk.example/api/v1",
   releaseContractVersion: 1,
   releaseVersions: {
     web: "0.1.0",
     render: "0.1.0",
-    typescriptCli: "0.1.0",
     rustCli: "0.1.0",
   },
   packageVersions: {
     web: "0.1.0",
     render: "0.1.0",
-    typescriptCli: "0.1.0",
     rustCli: "0.1.0",
   },
-  contractMigrationHead: "0013_token_fingerprints",
-  journalMigrationHead: "0013_token_fingerprints",
+  contractMigrationHead: "0017_steady_vulture",
+  journalMigrationHead: "0017_steady_vulture",
 };
 
 test("accepts a coherent GitHub release configuration", () => {
@@ -36,7 +33,6 @@ test("rejects missing external release gates", () => {
     repository: null,
     origin: null,
     rustApiBase: "http://localhost:3000/api/v1",
-    tsApiBase: "http://localhost:3000/api/v1",
     contractApiBase: "http://localhost:3000/api/v1",
   });
 
@@ -49,7 +45,7 @@ test("rejects repository and API contract drift", () => {
   const errors = collectReleaseErrors({
     ...valid,
     origin: "https://github.com/acme/another-repo.git",
-    tsApiBase: "https://other.example/api/v1",
+    contractApiBase: "https://other.example/api/v1",
   });
 
   assert.ok(errors.some((error) => error.includes("does not match Git origin")));

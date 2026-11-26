@@ -1,4 +1,4 @@
-import { chromium } from "../render/node_modules/playwright/index.mjs";
+import { chromium } from "../apps/render/node_modules/playwright/index.mjs";
 
 const BASE_URL = "http://localhost:58671";
 

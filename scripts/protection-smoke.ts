@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { Redis } from "@upstash/redis";
-import { RedisProtectionStore } from "../src/lib/protection/redis-store";
+import { RedisProtectionStore } from "../apps/web/src/lib/protection/redis-store";
 
 const url = process.env.RATE_LIMIT_REDIS_REST_URL;
 const token = process.env.RATE_LIMIT_REDIS_REST_TOKEN;

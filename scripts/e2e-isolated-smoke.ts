@@ -1,7 +1,7 @@
 import "dotenv/config";
 import http from "node:http";
-import { createPrincipal, cleanupPrincipal } from "../src/test/factories";
-import { signServeToken } from "../src/lib/serve-token";
+import { createPrincipal, cleanupPrincipal } from "../apps/web/src/test/factories";
+import { signServeToken } from "../apps/web/src/lib/serve-token";
 
 const APP_BASE = process.env.APP_ORIGIN ?? "http://localhost:58671";
 const SERVE_ORIGIN = process.env.SERVE_ORIGIN ?? "http://serve.kiosk.test:58671";

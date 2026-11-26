@@ -1,7 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
+node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -15,20 +15,20 @@
 
 # next.js
 /.next/
+/apps/web/.next/
 /out/
+/apps/web/out/
 
 # production
 /build
 
 # cli build output
-/cli/dist/
-/cli/node_modules/
-/cli-rs/target/
+/packages/cli/target/
 
 # render service (standalone package)
-/render/node_modules/
-/render/test-results/
-/render/_select_drive.mjs
+/apps/render/node_modules/
+/apps/render/test-results/
+/apps/render/_select_drive.mjs
 /logs/
 
 # misc

@@ -4,7 +4,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const contract = JSON.parse(readFileSync(resolve(root, "release/contract.json"), "utf8"));
+const contract = JSON.parse(readFileSync(resolve(root, "scripts/release-contract.json"), "utf8"));
 
 function git(...args) {
   const result = spawnSync("git", args, { cwd: root, encoding: "utf8" });

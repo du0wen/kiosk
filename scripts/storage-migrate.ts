@@ -1,10 +1,10 @@
 import "dotenv/config";
-import { inspectBackfill, createBackfillMigration, runBackfillBatch } from "../src/lib/storage/backfill";
-import { parseStorageMigrationArgs } from "../src/lib/storage/migration-cli";
-import { StorageError } from "../src/lib/storage/errors";
-import { createPurgeMigration, inspectPurge, runPurgeBatch } from "../src/lib/storage/purge";
-import { parseOrphanCleanupArgs, scanOrphanObjects } from "../src/lib/storage/orphan-cleanup";
-import { createRepointMigration, parseRepointArgs, runRepointBatch } from "../src/lib/storage/repoint";
+import { inspectBackfill, createBackfillMigration, runBackfillBatch } from "../apps/web/src/lib/storage/backfill";
+import { parseStorageMigrationArgs } from "../apps/web/src/lib/storage/migration-cli";
+import { StorageError } from "../apps/web/src/lib/storage/errors";
+import { createPurgeMigration, inspectPurge, runPurgeBatch } from "../apps/web/src/lib/storage/purge";
+import { parseOrphanCleanupArgs, scanOrphanObjects } from "../apps/web/src/lib/storage/orphan-cleanup";
+import { createRepointMigration, parseRepointArgs, runRepointBatch } from "../apps/web/src/lib/storage/repoint";
 
 async function main(): Promise<void> {
   if (process.argv[2] === "orphan-report" || process.argv[2] === "orphan-delete") {
