@@ -30,8 +30,7 @@ describe("GET /api/admin/readiness", () => {
     vi.mocked(getSession).mockResolvedValue(null);
     vi.mocked(isAdminEmail).mockReturnValue(false);
 
-    const req = new Request("http://localhost:3000/api/admin/readiness");
-    const res = await GET(req);
+    const res = await GET();
 
     expect(res.status).toBe(403);
     const body = await res.json();
@@ -42,7 +41,7 @@ describe("GET /api/admin/readiness", () => {
     vi.mocked(getSession).mockResolvedValue({
       user: { id: "u1", email: "admin@example.com", name: "Admin" },
       session: { id: "s1", userId: "u1", expiresAt: new Date() },
-    } as any);
+    } as Awaited<ReturnType<typeof getSession>>);
     vi.mocked(isAdminEmail).mockReturnValue(true);
     vi.mocked(checkDependencyReadiness).mockResolvedValue({
       status: "ok",
@@ -52,8 +51,7 @@ describe("GET /api/admin/readiness", () => {
       timestamp: "2026-11-10T00:00:00.000Z",
     });
 
-    const req = new Request("http://localhost:3000/api/admin/readiness");
-    const res = await GET(req);
+    const res = await GET();
 
     expect(res.status).toBe(200);
     expect(res.headers.get("cache-control")).toBe("no-store");
@@ -66,7 +64,7 @@ describe("GET /api/admin/readiness", () => {
     vi.mocked(getSession).mockResolvedValue({
       user: { id: "u1", email: "admin@example.com", name: "Admin" },
       session: { id: "s1", userId: "u1", expiresAt: new Date() },
-    } as any);
+    } as Awaited<ReturnType<typeof getSession>>);
     vi.mocked(isAdminEmail).mockReturnValue(true);
     vi.mocked(checkDependencyReadiness).mockResolvedValue({
       status: "unavailable",
@@ -76,8 +74,7 @@ describe("GET /api/admin/readiness", () => {
       timestamp: "2026-11-10T00:00:00.000Z",
     });
 
-    const req = new Request("http://localhost:3000/api/admin/readiness");
-    const res = await GET(req);
+    const res = await GET();
 
     expect(res.status).toBe(503);
     expect(res.headers.get("cache-control")).toBe("no-store");

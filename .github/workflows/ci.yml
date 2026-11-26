@@ -27,6 +27,19 @@ jobs:
     name: Web and deterministic tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      DATABASE_URL: postgresql://kiosk:test@localhost:5432/kiosk_test
+      APP_ORIGIN: http://localhost:3000
+      SERVE_ORIGIN: http://serve.kiosk.test:3000
+      BETTER_AUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_ORIGIN: http://localhost:3000
+      BETTER_AUTH_SECRET: BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=
+      GOOGLE_CLIENT_ID: test-client
+      GOOGLE_CLIENT_SECRET: test-secret
+      RENDER_SERVICE_URL: http://localhost:8787
+      RENDER_SHARED_SECRET: BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=
+      CONTENT_STORAGE_MODE: database
+      STORAGE_CREDENTIAL_KEY: BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -34,7 +47,7 @@ jobs:
           version: 10.33.0
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm verify:unit
@@ -46,7 +59,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@1.85.0
+      - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
@@ -68,12 +81,15 @@ jobs:
           version: 10.33.0
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
           cache-dependency-path: apps/render/pnpm-lock.yaml
-      - run: pnpm -C apps/render install --frozen-lockfile
-      - run: pnpm -C apps/render exec playwright install --with-deps chromium
-      - run: pnpm verify:render
+      - working-directory: apps/render
+        run: pnpm --ignore-workspace install --frozen-lockfile
+      - working-directory: apps/render
+        run: ./node_modules/.bin/playwright install --with-deps chromium
+      - working-directory: apps/render
+        run: pnpm --ignore-workspace test
 
   neon:
     name: Neon integration

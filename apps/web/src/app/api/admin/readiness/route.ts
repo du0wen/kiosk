@@ -33,7 +33,7 @@ function createDefaultProbes(): Record<string, DependencyProbe> {
   };
 }
 
-export async function GET(req: Request): Promise<Response> {
+export async function GET(): Promise<Response> {
   const session = await getSession();
   if (!session || !isAdminEmail(session.user.email)) {
     return Response.json(
