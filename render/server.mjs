@@ -11,7 +11,17 @@ function end(res, status, msg) {
 
 export function createRenderServer() {
   const secret = process.env.RENDER_SHARED_SECRET ?? "";
+  const maxConcurrent = Math.max(1, Number(process.env.MAX_CONCURRENT_RENDERS ?? 4));
+  let activeRenders = 0;
+
   return createServer((req, res) => {
+    if (req.method === "GET" && req.url === "/healthz") {
+      if ((req.headers["x-render-secret"] ?? "") !== secret) {
+        return end(res, 401, "unauthorized");
+      }
+      res.writeHead(200, { "content-type": "application/json" });
+      return res.end(JSON.stringify({ status: "ok" }));
+    }
     if (req.method !== "POST" || !req.url?.startsWith("/render")) {
       return end(res, 404, "not found");
     }
@@ -39,20 +49,33 @@ export function createRenderServer() {
       } catch {
         return end(res, 400, "bad json");
       }
-      const { html, format, watermark } = parsed ?? {};
+      const { html, format, watermark, watermarkMode, watermarkOpacity } = parsed ?? {};
       if (typeof html !== "string" || !TYPES[format]) {
         return end(res, 400, "bad request");
       }
       if (Buffer.byteLength(html, "utf8") > MAX) return end(res, 413, "too large");
+
+      if (activeRenders >= maxConcurrent) {
+        return end(res, 503, "render saturated");
+      }
+
+      activeRenders++;
       try {
+        const timeoutMs = Math.max(1000, Number(process.env.RENDER_TIMEOUT_MS ?? 15000));
         const buf = await Promise.race([
-          renderHtml(html, format, typeof watermark === "string" ? watermark : undefined),
-          new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 15000)),
+          renderHtml(html, format, typeof watermark === "string" ? watermark : undefined, {
+            watermarkMode,
+            watermarkOpacity,
+          }),
+          new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), timeoutMs)),
         ]);
         res.writeHead(200, { "content-type": TYPES[format] });
         res.end(buf);
       } catch (e) {
+        console.error("Render execution error:", e);
         end(res, e?.message === "timeout" ? 504 : 500, "render failed");
+      } finally {
+        activeRenders--;
       }
     });
   });

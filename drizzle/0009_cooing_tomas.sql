@@ -1,0 +1,2 @@
+CREATE INDEX "pages_org_updated_idx" ON "pages" USING btree ("organization_id","updated_at") WHERE "pages"."deleted_at" is null;--> statement-breakpoint
+CREATE INDEX "pages_org_views_idx" ON "pages" USING btree ("organization_id","view_count") WHERE "pages"."deleted_at" is null;

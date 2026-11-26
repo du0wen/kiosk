@@ -12,13 +12,21 @@ describe("SERVE_CSP", () => {
 
 describe("servedPageHeaders", () => {
   it("sets noindex + hardening and is embeddable (no X-Frame-Options)", () => {
-    const h = servedPageHeaders();
+    const h = servedPageHeaders({ visibility: "public", contentHash: "a".repeat(64) });
     expect(h["content-type"]).toContain("text/html");
     expect(h["content-security-policy"]).toBe(SERVE_CSP);
     expect(h["x-robots-tag"]).toContain("noindex");
     expect(h["x-content-type-options"]).toBe("nosniff");
     expect(h["referrer-policy"]).toBe("no-referrer");
     expect(h["x-frame-options"]).toBeUndefined();
+    expect(h["etag"]).toBe(`"sha256-${"a".repeat(64)}"`);
+    expect(h["cache-control"]).toContain("public");
+    expect(h["cache-control"]).toContain("must-revalidate");
+  });
+
+  it("never permits shared caching for organization pages or errors", () => {
+    expect(servedPageHeaders({ visibility: "org", contentHash: "b".repeat(64) })["cache-control"]).toBe("private, no-store");
+    expect(servedPageHeaders({ visibility: "public", contentHash: "b".repeat(64), error: true })["cache-control"]).toBe("private, no-store");
   });
 });
 

@@ -1,8 +1,19 @@
 import { and, desc, eq, isNull, lt, sql } from "drizzle-orm";
 import { createHash } from "node:crypto";
 import { db } from "@/db";
-import { pages, pageVersion, user, type Page } from "@/db/schema";
+import { pageContent, pages, pageVersion, user, type Page } from "@/db/schema";
 import { publicId } from "@/lib/id";
+import {
+  assertPageCreateQuota,
+  assertPageVersionQuota,
+  lockOrganizationQuota,
+} from "@/lib/quota";
+import type { ProtectionPolicy } from "@/lib/protection/policy";
+import {
+  contentRepository as defaultContentRepository,
+  type ContentRepository,
+  type PreparedExternalContent,
+} from "@/lib/storage/content-repository";
 
 const MAX_BYTES = 2 * 1024 * 1024; // 2 MB
 
@@ -38,35 +49,88 @@ function hashOf(html: string): string {
   return createHash("sha256").update(html).digest("hex");
 }
 
+type ContentTransaction = Pick<typeof db, "insert" | "select">;
+
+async function ensureExternalContent(
+  tx: ContentTransaction,
+  organizationId: string,
+  external: PreparedExternalContent | null,
+): Promise<string | null> {
+  if (!external) return null;
+  const [inserted] = await tx
+    .insert(pageContent)
+    .values({
+      organizationId,
+      storageProfileId: external.storageProfileId,
+      objectKey: external.objectKey,
+      contentHash: external.contentHash,
+      sizeBytes: external.sizeBytes,
+    })
+    .onConflictDoNothing()
+    .returning({ id: pageContent.id });
+  if (inserted) return inserted.id;
+  const [existing] = await tx
+    .select({ id: pageContent.id })
+    .from(pageContent)
+    .where(
+      and(
+        eq(pageContent.organizationId, organizationId),
+        eq(pageContent.storageProfileId, external.storageProfileId),
+        eq(pageContent.contentHash, external.contentHash),
+      ),
+    )
+    .limit(1);
+  if (!existing) throw new Error("Uploaded content metadata is unavailable");
+  return existing.id;
+}
+
 export async function createPage(params: {
   organizationId: string;
   userId: string;
   html: string;
   title?: string | null;
   visibility?: "org" | "public";
-}): Promise<Page> {
+}, dependencies: {
+  contentRepository?: Pick<ContentRepository, "write">;
+  quotaPolicy?: Readonly<ProtectionPolicy>;
+} = {}): Promise<Page> {
   const size = sizeOf(params.html);
   if (size > MAX_BYTES) throw new PageTooLargeError();
-  const [row] = await db
-    .insert(pages)
-    .values({
-      publicId: publicId(),
-      organizationId: params.organizationId,
-      createdBy: params.userId,
-      title: params.title ?? extractTitle(params.html),
-      contentHtml: params.html,
-      sizeBytes: size,
-      contentHash: hashOf(params.html),
-      visibility: params.visibility ?? "org",
-    })
-    .returning();
-  await db.insert(pageVersion).values({
-    pageId: row.id,
-    contentHtml: params.html,
-    title: row.title,
-    editedBy: params.userId,
-  });
-  return row;
+  return (dependencies.contentRepository ?? defaultContentRepository).write(
+    { organizationId: params.organizationId, html: params.html },
+    (prepared) =>
+      db.transaction(async (tx) => {
+        await assertPageCreateQuota(
+          tx,
+          params.organizationId,
+          size,
+          dependencies.quotaPolicy,
+        );
+        const contentId = await ensureExternalContent(tx, params.organizationId, prepared.external);
+        const [row] = await tx
+          .insert(pages)
+          .values({
+            publicId: publicId(),
+            organizationId: params.organizationId,
+            createdBy: params.userId,
+            title: params.title ?? extractTitle(params.html),
+            contentHtml: prepared.legacyHtml,
+            currentContentId: contentId,
+            sizeBytes: size,
+            contentHash: hashOf(params.html),
+            visibility: params.visibility ?? "org",
+          })
+          .returning();
+        await tx.insert(pageVersion).values({
+          pageId: row.id,
+          contentHtml: prepared.legacyHtml,
+          contentId,
+          title: row.title,
+          editedBy: params.userId,
+        });
+        return row;
+      }),
+  );
 }
 
 export async function updatePage(params: {
@@ -76,7 +140,10 @@ export async function updatePage(params: {
   html: string;
   title?: string | null;
   visibility?: "org" | "public";
-}): Promise<Page | null> {
+}, dependencies: {
+  contentRepository?: Pick<ContentRepository, "write">;
+  quotaPolicy?: Readonly<ProtectionPolicy>;
+} = {}): Promise<Page | null> {
   const size = sizeOf(params.html);
   if (size > MAX_BYTES) throw new PageTooLargeError();
   const newHash = hashOf(params.html);
@@ -85,34 +152,63 @@ export async function updatePage(params: {
     organizationId: params.organizationId,
   });
   if (!existing) return null;
-  const [row] = await db
-    .update(pages)
-    .set({
-      contentHtml: params.html,
-      sizeBytes: size,
-      contentHash: newHash,
-      title: params.title ?? extractTitle(params.html),
-      ...(params.visibility ? { visibility: params.visibility } : {}),
-      updatedBy: params.userId,
-      updatedAt: new Date(),
-    })
-    .where(
-      and(
-        eq(pages.publicId, params.publicId),
-        eq(pages.organizationId, params.organizationId),
-        isNull(pages.deletedAt),
-      ),
-    )
-    .returning();
-  if (row && existing.contentHash !== newHash) {
-    await db.insert(pageVersion).values({
-      pageId: row.id,
-      contentHtml: params.html,
-      title: row.title,
-      editedBy: params.userId,
-    });
-  }
-  return row ?? null;
+  return (dependencies.contentRepository ?? defaultContentRepository).write(
+    { organizationId: params.organizationId, html: params.html },
+    (prepared) =>
+      db.transaction(async (tx) => {
+        await lockOrganizationQuota(params.organizationId, tx);
+        const [lockedExisting] = await tx
+          .select({ id: pages.id, contentHash: pages.contentHash })
+          .from(pages)
+          .where(
+            and(
+              eq(pages.publicId, params.publicId),
+              eq(pages.organizationId, params.organizationId),
+              isNull(pages.deletedAt),
+            ),
+          )
+          .limit(1);
+        if (!lockedExisting) return null;
+        const contentChanged = lockedExisting.contentHash !== newHash;
+        await assertPageVersionQuota(
+          tx,
+          params.organizationId,
+          contentChanged ? size : 0,
+          dependencies.quotaPolicy,
+        );
+        const contentId = await ensureExternalContent(tx, params.organizationId, prepared.external);
+        const [row] = await tx
+          .update(pages)
+          .set({
+            contentHtml: prepared.legacyHtml,
+            currentContentId: contentId,
+            sizeBytes: size,
+            contentHash: newHash,
+            title: params.title ?? extractTitle(params.html),
+            ...(params.visibility ? { visibility: params.visibility } : {}),
+            updatedBy: params.userId,
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(pages.publicId, params.publicId),
+              eq(pages.organizationId, params.organizationId),
+              isNull(pages.deletedAt),
+            ),
+          )
+          .returning();
+        if (row && contentChanged) {
+          await tx.insert(pageVersion).values({
+            pageId: row.id,
+            contentHtml: prepared.legacyHtml,
+            contentId,
+            title: row.title,
+            editedBy: params.userId,
+          });
+        }
+        return row ?? null;
+      }),
+  );
 }
 
 export async function getPage(params: {
@@ -131,6 +227,14 @@ export async function getPage(params: {
     )
     .limit(1);
   return row ?? null;
+}
+
+export async function getPageContent(page: Page): Promise<string> {
+  return defaultContentRepository.read({
+    organizationId: page.organizationId,
+    contentId: page.currentContentId,
+    legacyHtml: page.contentHtml,
+  });
 }
 
 export async function softDeletePage(params: {
@@ -235,23 +339,63 @@ export async function getPageVersionContent(params: {
   });
   if (!page) return null;
   const [v] = await db
-    .select({ html: pageVersion.contentHtml })
+    .select({ html: pageVersion.contentHtml, contentId: pageVersion.contentId })
     .from(pageVersion)
     .where(
       and(eq(pageVersion.id, params.versionId), eq(pageVersion.pageId, page.id)),
     )
     .limit(1);
-  return v?.html ?? null;
+  if (!v) return null;
+  return defaultContentRepository.read({
+    organizationId: params.organizationId,
+    contentId: v.contentId,
+    legacyHtml: v.html,
+  });
 }
 
-/** Active page by public_id, without org scoping — for public serving. */
+/** Active page by public_id, without org scoping — for public serving. Excludes soft-deleted and blocked pages. */
 export async function getPublicPage(publicId: string): Promise<Page | null> {
   const [row] = await db
     .select()
     .from(pages)
-    .where(and(eq(pages.publicId, publicId), isNull(pages.deletedAt)))
+    .where(
+      and(
+        eq(pages.publicId, publicId),
+        isNull(pages.deletedAt),
+        isNull(pages.blockedAt),
+      ),
+    )
     .limit(1);
   return row ?? null;
+}
+
+/** Takedown/block a page by publicId (sets blocked_at timestamp and reason). */
+export async function blockPage(params: {
+  publicId: string;
+  reason?: string;
+}): Promise<boolean> {
+  const [updated] = await db
+    .update(pages)
+    .set({
+      blockedAt: new Date(),
+      blockedReason: params.reason ?? null,
+    })
+    .where(and(eq(pages.publicId, params.publicId), isNull(pages.deletedAt)))
+    .returning({ id: pages.id });
+  return !!updated;
+}
+
+/** Unblock a previously blocked page. */
+export async function unblockPage(publicId: string): Promise<boolean> {
+  const [updated] = await db
+    .update(pages)
+    .set({
+      blockedAt: null,
+      blockedReason: null,
+    })
+    .where(and(eq(pages.publicId, publicId), isNull(pages.deletedAt)))
+    .returning({ id: pages.id });
+  return !!updated;
 }
 
 /** Best-effort view-count bump by internal id. */

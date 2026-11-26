@@ -12,16 +12,25 @@ export const SERVE_CSP = [
 ].join("; ");
 
 /** Response headers for a served user page. Intentionally embeddable (no X-Frame-Options). */
-export function servedPageHeaders(): Record<string, string> {
-  return {
+export function servedPageHeaders(input: {
+  visibility: "org" | "public";
+  contentHash: string | null;
+  error?: boolean;
+}): Record<string, string> {
+  const headers: Record<string, string> = {
     "content-type": "text/html; charset=utf-8",
     "content-security-policy": SERVE_CSP,
     "x-robots-tag": "noindex, nofollow",
     "x-content-type-options": "nosniff",
     "referrer-policy": "no-referrer",
-    // MVP: serve fresh from DB. CDN tag-caching is a later hardening item.
-    "cache-control": "public, max-age=0, must-revalidate",
+    "cache-control": input.error || input.visibility === "org"
+      ? "private, no-store"
+      : "public, max-age=0, s-maxage=0, must-revalidate",
   };
+  if (!input.error && input.visibility === "public" && input.contentHash && /^[a-f0-9]{64}$/.test(input.contentHash)) {
+    headers.etag = `"sha256-${input.contentHash}"`;
+  }
+  return headers;
 }
 
 export function notFoundResponse(): Response {

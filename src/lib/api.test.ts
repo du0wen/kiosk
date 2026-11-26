@@ -24,6 +24,10 @@ describe("requireToken", () => {
     expect(id.organizationId).toBe(principal.organizationId);
     expect(id.userId).toBe(principal.userId);
     expect(id.role).toBe("owner");
+    expect(id.tokenId).toEqual(expect.any(String));
+    expect(id.scopes).toEqual(
+      expect.arrayContaining(["identity:read", "pages:read", "pages:write", "pages:export"]),
+    );
   });
   it("throws ApiError 401 when the header is missing", async () => {
     await expect(requireToken(reqWithAuth())).rejects.toMatchObject({
@@ -31,7 +35,7 @@ describe("requireToken", () => {
     });
   });
   it("throws ApiError 401 for an unknown token", async () => {
-    await expect(requireToken(reqWithAuth("kiosk_live_nope"))).rejects.toBeInstanceOf(
+    await expect(requireToken(reqWithAuth("kiosk_api_nope"))).rejects.toBeInstanceOf(
       ApiError,
     );
   });

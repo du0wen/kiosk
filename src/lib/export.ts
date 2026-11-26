@@ -1,4 +1,5 @@
 import TurndownService from "turndown";
+import { buildWatermarkSvgDataUri, type WatermarkMode } from "./watermark";
 
 export type ExportFormat = "md" | "html" | "pdf" | "png" | "jpeg";
 
@@ -52,11 +53,17 @@ function escapeHtml(s: string): string {
   );
 }
 
+export type ExportWatermarkOptions = {
+  mode?: WatermarkMode;
+  opacity?: number;
+};
+
 /** POST the HTML to the render microservice; return the rendered bytes. */
 async function renderRemote(
   html: string,
   format: "pdf" | "png" | "jpeg",
   watermark?: string | null,
+  watermarkOptions?: ExportWatermarkOptions,
 ): Promise<Buffer> {
   const base = process.env.RENDER_SERVICE_URL;
   if (!base) throw new ExportError(502, "Render service not configured");
@@ -68,7 +75,15 @@ async function renderRemote(
         "content-type": "application/json",
         "x-render-secret": process.env.RENDER_SHARED_SECRET ?? "",
       },
-      body: JSON.stringify({ html, format, ...(watermark ? { watermark } : {}) }),
+      body: JSON.stringify({
+        html,
+        format,
+        ...(watermark ? { watermark } : {}),
+        ...(watermarkOptions?.mode ? { watermarkMode: watermarkOptions.mode } : {}),
+        ...(watermarkOptions?.opacity !== undefined
+          ? { watermarkOpacity: watermarkOptions.opacity }
+          : {}),
+      }),
       signal: AbortSignal.timeout(30_000),
     });
   } catch (e) {
@@ -83,6 +98,7 @@ export async function exportPage(
   page: { publicId: string; title: string | null; contentHtml: string },
   format: ExportFormat,
   watermark?: string | null,
+  watermarkOptions?: ExportWatermarkOptions,
 ): Promise<{ body: Buffer | string; contentType: string; ext: string }> {
   if (format === "md") {
     return {
@@ -92,15 +108,19 @@ export async function exportPage(
     };
   }
   if (format === "html") {
-    const footer = watermark
-      ? `\n<footer style="position:fixed;bottom:8px;right:12px;font:12px sans-serif;color:#8888;opacity:.7">${escapeHtml(watermark)}</footer>`
-      : "";
+    let overlay = "";
+    if (watermark && watermarkOptions?.mode === "fullpage") {
+      const uri = buildWatermarkSvgDataUri(watermark, watermarkOptions.opacity ?? 0.08);
+      overlay = `\n<div style="position:fixed;inset:0;pointer-events:none;z-index:2147483647;background-repeat:repeat;background-image:url('${uri}')"></div>`;
+    } else if (watermark) {
+      overlay = `\n<footer style="position:fixed;bottom:8px;right:12px;font:12px sans-serif;color:#8888;opacity:.7">${escapeHtml(watermark)}</footer>`;
+    }
     return {
-      body: page.contentHtml + footer,
+      body: page.contentHtml + overlay,
       contentType: "text/html; charset=utf-8",
       ext: "html",
     };
   }
-  const body = await renderRemote(page.contentHtml, format, watermark);
+  const body = await renderRemote(page.contentHtml, format, watermark, watermarkOptions);
   return { body, contentType: RENDERED[format], ext: format };
 }

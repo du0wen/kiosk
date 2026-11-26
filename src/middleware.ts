@@ -1,9 +1,23 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { routeForHost } from "@/lib/serving";
 
+function isSetupPath(pathname: string): boolean {
+  return (
+    pathname === "/setup" ||
+    pathname.startsWith("/setup/") ||
+    pathname === "/api/setup" ||
+    pathname.startsWith("/api/setup/")
+  );
+}
+
 export function middleware(req: NextRequest) {
+  const pathname = req.nextUrl.pathname;
   const host = req.headers.get("host") ?? "";
-  const decision = routeForHost({ host, pathname: req.nextUrl.pathname });
+  // Setup routes enforce their own live Node.js lock/unlock state so hot-reload
+  // after /api/setup/complete works immediately without restarting the server.
+  const decision = isSetupPath(pathname)
+    ? ({ type: "next" } as const)
+    : routeForHost({ host, pathname });
 
   if (decision.type === "redirect") {
     return NextResponse.redirect(decision.url, 302);
@@ -15,6 +29,13 @@ export function middleware(req: NextRequest) {
   const res = NextResponse.next();
   if (!req.nextUrl.pathname.startsWith("/p/")) {
     res.headers.set("X-Frame-Options", "DENY");
+    res.headers.set("Content-Security-Policy", "frame-ancestors 'none'");
+    res.headers.set("X-Content-Type-Options", "nosniff");
+    res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+    res.headers.set(
+      "Permissions-Policy",
+      "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+    );
   }
   return res;
 }

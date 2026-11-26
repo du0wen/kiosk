@@ -9,6 +9,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { organization, user } from "./auth";
+import { pageContent } from "./page-content";
 // Relative import: drizzle-kit's schema loader does not resolve the "@/" alias.
 import { uuidv7 } from "../../lib/id";
 
@@ -26,7 +27,10 @@ export const pages = pgTable(
       .notNull()
       .references(() => user.id),
     title: text("title"),
-    contentHtml: text("content_html").notNull(),
+    contentHtml: text("content_html"),
+    currentContentId: uuid("current_content_id").references(() => pageContent.id, {
+      onDelete: "set null",
+    }),
     sizeBytes: integer("size_bytes").notNull(),
     contentHash: text("content_hash"),
     viewCount: integer("view_count").notNull().default(0),
@@ -37,11 +41,21 @@ export const pages = pgTable(
     updatedBy: text("updated_by").references(() => user.id),
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
     deletedBy: text("deleted_by").references(() => user.id),
+    blockedAt: timestamp("blocked_at", { withTimezone: true }),
+    blockedReason: text("blocked_reason"),
   },
   (t) => [
     uniqueIndex("pages_public_id_uq").on(t.publicId),
     index("pages_org_active_idx")
       .on(t.organizationId)
+      .where(sql`${t.deletedAt} is null`),
+    // Console list: org-scoped + ordered by updated_at (default + updated_* sorts)
+    // or view_count (views_desc), over active rows only. See P5-1 spec §9.
+    index("pages_org_updated_idx")
+      .on(t.organizationId, t.updatedAt)
+      .where(sql`${t.deletedAt} is null`),
+    index("pages_org_views_idx")
+      .on(t.organizationId, t.viewCount)
       .where(sql`${t.deletedAt} is null`),
   ],
 );
@@ -63,7 +77,10 @@ export const pageVersion = pgTable(
     pageId: uuid("page_id")
       .notNull()
       .references(() => pages.id, { onDelete: "cascade" }),
-    contentHtml: text("content_html").notNull(),
+    contentHtml: text("content_html"),
+    contentId: uuid("content_id").references(() => pageContent.id, {
+      onDelete: "set null",
+    }),
     title: text("title"),
     editedBy: text("edited_by").references(() => user.id),
     createdAt: timestamp("created_at", { withTimezone: true })
