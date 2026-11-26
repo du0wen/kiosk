@@ -1,0 +1,31 @@
+{
+  "binary": "kiosk",
+  "commands": {
+    "login": ["--token"],
+    "logout": [],
+    "publish": ["--id", "--new", "--title", "--public", "--json"],
+    "share": ["--public", "--private"],
+    "export": ["--format", "--output", "-o"],
+    "list": [],
+    "open": [],
+    "delete": [],
+    "install-skill": ["--claude", "--codex"],
+    "whoami": [],
+    "templates": ["--category"],
+    "template": ["--version", "--html"]
+  },
+  "config": {
+    "directory": ".config/kiosk",
+    "file": "config.json",
+    "fields": ["token", "apiBase"],
+    "environment": ["KIOSK_TOKEN", "KIOSK_API_BASE"],
+    "defaultApiBase": "http://localhost:3000/api/v1"
+  },
+  "state": {
+    "directory": ".kiosk",
+    "file": "pages.json",
+    "version": 1,
+    "fields": ["version", "pages"],
+    "pageFields": ["id", "url"]
+  }
+}

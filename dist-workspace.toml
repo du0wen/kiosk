@@ -1,0 +1,24 @@
+[workspace]
+members = ["cargo:cli-rs"]
+
+[dist]
+cargo-dist-version = "0.31.0"
+dist = true
+ci = ["github"]
+hosting = ["github"]
+installers = ["shell", "powershell", "npm"]
+publish-jobs = ["npm"]
+targets = [
+  "aarch64-apple-darwin",
+  "x86_64-apple-darwin",
+  "aarch64-unknown-linux-musl",
+  "x86_64-unknown-linux-musl",
+  "aarch64-pc-windows-msvc",
+  "x86_64-pc-windows-msvc",
+]
+checksum = "sha256"
+install-path = "CARGO_HOME"
+install-updater = false
+npm-scope = "@kiosk"
+npm-package = "cli"
+pr-run-mode = "plan"

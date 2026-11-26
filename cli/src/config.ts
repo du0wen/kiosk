@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { join, dirname } from "node:path";
 
-const DEFAULT_API_BASE = "http://localhost:3000/api/v1";
+export const DEFAULT_API_BASE = "http://localhost:3000/api/v1";
 
 export function configPath(): string {
   return join(homedir(), ".config", "kiosk", "config.json");

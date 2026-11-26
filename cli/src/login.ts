@@ -98,7 +98,7 @@ async function exchangeCode(
   return access_token;
 }
 
-/** Trade a valid OIDC access token for a durable kiosk_live_ API token. */
+/** Trade a valid OIDC access token for a durable kiosk_api_ API token. */
 async function mintApiToken(
   appOrigin: string,
   accessToken: string,

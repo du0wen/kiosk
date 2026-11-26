@@ -3,19 +3,19 @@ import { KioskClient, CliError } from "./client";
 
 afterEach(() => vi.unstubAllGlobals());
 
-function stubFetch(status: number, body: unknown) {
+function stubFetch(status: number, body: unknown, headers: Record<string, string> = {}) {
   const fn = vi.fn(
     async () =>
       new Response(body === undefined ? null : JSON.stringify(body), {
         status,
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", ...headers },
       }),
   );
   vi.stubGlobal("fetch", fn);
   return fn;
 }
 
-const client = () => new KioskClient("https://api.example/v1", "kiosk_live_x");
+const client = () => new KioskClient("https://api.example/v1", "kiosk_api_x");
 
 describe("KioskClient", () => {
   it("publish POSTs html with auth + title and returns the result", async () => {
@@ -25,7 +25,7 @@ describe("KioskClient", () => {
     const [url, init] = fn.mock.calls[0] as [string, RequestInit & { headers: Record<string, string> }];
     expect(url).toBe("https://api.example/v1/pages");
     expect(init.method).toBe("POST");
-    expect(init.headers.authorization).toBe("Bearer kiosk_live_x");
+    expect(init.headers.authorization).toBe("Bearer kiosk_api_x");
     expect(init.headers["x-kiosk-title"]).toBe("Title");
     expect(init.body).toBe("<html></html>");
   });
@@ -47,6 +47,17 @@ describe("KioskClient", () => {
   it("maps 401 to exit code 2", async () => {
     stubFetch(401, { error: { code: "unauthorized", message: "bad" } });
     await expect(client().me()).rejects.toMatchObject({ exitCode: 2 });
+  });
+  it("maps 429 to a concise retry message", async () => {
+    stubFetch(
+      429,
+      { error: { code: "rate_limited", message: "Too many requests" } },
+      { "retry-after": "42" },
+    );
+    await expect(client().publish("x")).rejects.toMatchObject({
+      message: "Too many requests. Retry in 42 seconds.",
+      exitCode: 1,
+    });
   });
   it("del succeeds on 204", async () => {
     stubFetch(204, undefined);

@@ -4,7 +4,7 @@ import { resolveConfig, saveConfig } from "./config.js";
 import { KioskClient, CliError } from "./client.js";
 import { publishCommand } from "./commands.js";
 
-const USAGE = `kiosk <command>
+export const USAGE = `kiosk <command>
 
   login                 Log in via the browser (or --token <t> / KIOSK_TOKEN)
   publish <file>        Publish/update an HTML file, prints the URL (private by default)
@@ -14,12 +14,14 @@ const USAGE = `kiosk <command>
                           --public    publish as publicly viewable
                           --json      print JSON
   share <id>            Set page visibility: --public | --private
-  export <id>           Export a page: --format md|html|pdf|png|jpeg [-o file]
+  export <id>           Export a page: --format md|html|pdf|png|jpeg [-o, --output file]
   list                  List your pages
   open <file>           Open a published page in the browser
   delete <id>           Unpublish a page
   install-skill         Install the Claude/Codex skill files (--claude/--codex)
   whoami                Show the authenticated account
+  templates             List organization style templates (--category <cat>)
+  template <slug>       Fetch a template by slug (--version <n>, --html)
   logout                Remove the saved token
 `;
 
@@ -162,6 +164,41 @@ export async function runCli(argv: string[]): Promise<number> {
         process.stdout.write(
           JSON.stringify(await new KioskClient(apiBase, token).me(), null, 2) + "\n",
         );
+        return 0;
+      }
+      case "templates": {
+        const { values } = parseArgs({
+          args: rest,
+          options: { category: { type: "string" } },
+        });
+        const { apiBase, token } = requireToken();
+        const { templates } = await new KioskClient(apiBase, token).listTemplates(
+          values.category,
+        );
+        process.stdout.write(JSON.stringify(templates, null, 2) + "\n");
+        return 0;
+      }
+      case "template": {
+        const { values, positionals } = parseArgs({
+          args: rest,
+          allowPositionals: true,
+          options: {
+            version: { type: "string" },
+            html: { type: "boolean" },
+          },
+        });
+        const slug = positionals[0];
+        if (!slug) {
+          throw new CliError("Usage: kiosk template <slug> [--version <n>] [--html]");
+        }
+        const version = values.version ? Number(values.version) : undefined;
+        const { apiBase, token } = requireToken();
+        const tpl = await new KioskClient(apiBase, token).getTemplate(slug, version);
+        if (values.html) {
+          process.stdout.write(`${tpl.html}\n`);
+        } else {
+          process.stdout.write(JSON.stringify(tpl, null, 2) + "\n");
+        }
         return 0;
       }
       case "install-skill": {

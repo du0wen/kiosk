@@ -10,6 +10,23 @@ export class CliError extends Error {
 
 export type PageResult = { id: string; url: string; [k: string]: unknown };
 
+async function responseError(res: Response): Promise<CliError> {
+  let message = `HTTP ${res.status}`;
+  try {
+    const body = (await res.json()) as { error?: { message?: string } };
+    message = body?.error?.message ?? message;
+  } catch {
+    // non-JSON error body
+  }
+  if (res.status === 429) {
+    const retryAfter = res.headers.get("retry-after");
+    if (retryAfter && /^\d+$/.test(retryAfter)) {
+      message = `${message}. Retry in ${retryAfter} seconds.`;
+    }
+  }
+  return new CliError(message, res.status === 401 ? 2 : 1);
+}
+
 export class KioskClient {
   constructor(
     private apiBase: string,
@@ -32,14 +49,7 @@ export class KioskClient {
 
   private async parse(res: Response): Promise<unknown> {
     if (res.ok) return res.status === 204 ? undefined : res.json();
-    let message = `HTTP ${res.status}`;
-    try {
-      const body = (await res.json()) as { error?: { message?: string } };
-      message = body?.error?.message ?? message;
-    } catch {
-      // non-JSON error body
-    }
-    throw new CliError(message, res.status === 401 ? 2 : 1);
+    throw await responseError(res);
   }
 
   async publish(
@@ -86,6 +96,21 @@ export class KioskClient {
   async me(): Promise<unknown> {
     return this.parse(await this.req("GET", "/me"));
   }
+  async listTemplates(category?: string): Promise<{ templates: unknown[] }> {
+    const q = category ? `?category=${encodeURIComponent(category)}` : "";
+    return (await this.parse(await this.req("GET", `/templates${q}`))) as {
+      templates: unknown[];
+    };
+  }
+  async getTemplate(
+    slug: string,
+    version?: number,
+  ): Promise<{ html: string; [key: string]: unknown }> {
+    const q = version ? `?version=${version}` : "";
+    return (await this.parse(
+      await this.req("GET", `/templates/${encodeURIComponent(slug)}${q}`),
+    )) as { html: string; [key: string]: unknown };
+  }
   async exportFile(
     id: string,
     format: string,
@@ -95,15 +120,7 @@ export class KioskClient {
       { headers: { authorization: `Bearer ${this.token}` } },
     );
     if (!res.ok) {
-      let message = `HTTP ${res.status}`;
-      try {
-        message =
-          ((await res.json()) as { error?: { message?: string } })?.error
-            ?.message ?? message;
-      } catch {
-        // non-JSON error body
-      }
-      throw new CliError(message, res.status === 401 ? 2 : 1);
+      throw await responseError(res);
     }
     const dispo = res.headers.get("content-disposition") ?? "";
     const m = dispo.match(/filename="([^"]+)"/);
