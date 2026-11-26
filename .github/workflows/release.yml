@@ -17,10 +17,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install cargo-dist
-        run: curl --proto '=https' --tlsv1.2 -LsSf https://github.com/axodotdev/cargo-dist/releases/download/v0.31.0/cargo-dist-installer.sh | sh
+        run: |
+          curl --proto '=https' --tlsv1.2 -LsSf https://github.com/axodotdev/cargo-dist/releases/download/v0.31.0/cargo-dist-installer.sh | sh
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - id: plan
         run: |
-          cargo dist plan --output-format=json > dist-manifest.json
+          dist plan --output-format=json > dist-manifest.json
           echo "val=$(cat dist-manifest.json | tr -d '\n')" >> "$GITHUB_OUTPUT"
 
   build:
@@ -33,13 +36,11 @@ jobs:
           - target: aarch64-apple-darwin
             os: macos-14
           - target: x86_64-apple-darwin
-            os: macos-13
+            os: macos-14
           - target: aarch64-unknown-linux-musl
-            os: ubuntu-latest
+            os: ubuntu-24.04-arm
           - target: x86_64-unknown-linux-musl
             os: ubuntu-latest
-          - target: aarch64-pc-windows-msvc
-            os: windows-latest
           - target: x86_64-pc-windows-msvc
             os: windows-latest
     runs-on: ${{ matrix.os }}
@@ -49,28 +50,66 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
-      - name: Install cargo-dist
+      - name: Install Linux musl tools
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+      - name: Install cargo-dist (Unix)
+        if: runner.os != 'Windows'
         shell: bash
-        run: curl --proto '=https' --tlsv1.2 -LsSf https://github.com/axodotdev/cargo-dist/releases/download/v0.31.0/cargo-dist-installer.sh | sh
+        run: |
+          curl --proto '=https' --tlsv1.2 -LsSf https://github.com/axodotdev/cargo-dist/releases/download/v0.31.0/cargo-dist-installer.sh | sh
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Install cargo-dist (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          irm https://github.com/axodotdev/cargo-dist/releases/download/v0.31.0/cargo-dist-installer.ps1 | iex
+          "$HOME\.cargo\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          "$HOME\.local\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       - name: Build target artifact
         shell: bash
-        run: cargo dist build --target ${{ matrix.target }} --output-format=json
+        run: dist build --artifacts=local --target ${{ matrix.target }} --output-format=json
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: artifacts-${{ matrix.target }}
-          path: target/distrib/*
+          path: packages/cli/target/distrib/*
+
+  build-global:
+    name: Build installers
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install cargo-dist
+        run: |
+          curl --proto '=https' --tlsv1.2 -LsSf https://github.com/axodotdev/cargo-dist/releases/download/v0.31.0/cargo-dist-installer.sh | sh
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Download target artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: artifacts-*
+          merge-multiple: true
+          path: packages/cli/target/distrib
+      - name: Build global installers
+        run: dist build --artifacts=global --output-format=json
+      - name: Upload global artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts-global
+          path: packages/cli/target/distrib/*
 
   publish-release:
     name: Publish GitHub Release
-    needs: [build]
+    needs: [build-global]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          pattern: artifacts-*
-          merge-multiple: true
+          name: artifacts-global
           path: release-artifacts
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

@@ -60,10 +60,16 @@ User / AI Agent
 
 ### 1. Install CLI
 
-Pre-built binaries are available for macOS, Linux, and Windows:
+Pre-built binaries are available for macOS, Linux, and Windows (no Rust or Node.js required):
 
 ```bash
-# Via Cargo
+# macOS / Linux (Shell installer)
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/du0wen/kiosk/releases/latest/download/kiosk-cli-installer.sh | sh
+
+# Windows (PowerShell installer)
+powershell -ExecutionPolicy ByPass -c "irm https://github.com/du0wen/kiosk/releases/latest/download/kiosk-cli-installer.ps1 | iex"
+
+# Or build from source via Cargo
 cargo install --path packages/cli
 ```
 
