@@ -33,7 +33,18 @@ describe("GET /p/[publicId]", () => {
     );
     expect(res.headers.get("x-robots-tag")).toContain("noindex");
     expect(res.headers.get("x-frame-options")).toBeNull();
+    expect(res.headers.get("etag")).toMatch(/^"sha256-[a-f0-9]{64}"$/);
+    expect(res.headers.get("cache-control")).toContain("must-revalidate");
     expect(await res.text()).toContain("<body>hi</body>");
+
+    const conditional = await GET(
+      new Request(`http://serve.local/p/${page.publicId}`, {
+        headers: { "if-none-match": res.headers.get("etag")! },
+      }),
+      ctx(page.publicId),
+    );
+    expect(conditional.status).toBe(304);
+    expect(await conditional.text()).toBe("");
   });
 
   it("404 for a missing id", async () => {
@@ -87,6 +98,8 @@ describe("/p gate (org visibility)", () => {
       ctx(page.publicId),
     );
     expect(res.status).toBe(200);
+    expect(res.headers.get("cache-control")).toBe("private, no-store");
+    expect(res.headers.get("etag")).toBeNull();
     expect(await res.text()).toContain("secret");
   });
 

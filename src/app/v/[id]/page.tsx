@@ -1,26 +1,26 @@
+import type { Metadata } from "next";
 import { redirect, notFound } from "next/navigation";
+import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { getSession } from "@/lib/session";
 import { getPublicPage, pageRawUrl } from "@/lib/pages";
 import { isOrgMember } from "@/lib/console";
 import { getOrgBranding } from "@/lib/org-settings";
 import { signServeToken } from "@/lib/serve-token";
+import { resolveWatermarkDisplay } from "@/lib/watermark";
+import { ViewerFrame } from "./_components/ViewerFrame";
+import styles from "./_components/ViewerFrame.module.css";
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 type Props = { params: Promise<{ id: string }> };
 
-const shell: React.CSSProperties = {
-  height: "100vh",
-  display: "flex",
-  flexDirection: "column",
-  margin: 0,
-};
-const bar: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  gap: 10,
-  padding: "8px 14px",
-  borderBottom: "1px solid #8883",
-  font: "14px system-ui, sans-serif",
-};
+const DEFAULT_ACCENT = "#0f766e";
 
 export default async function ViewerPage({ params }: Props) {
   const { id } = await params;
@@ -28,51 +28,59 @@ export default async function ViewerPage({ params }: Props) {
   if (!page) notFound();
 
   const brand = await getOrgBranding(page.organizationId);
-  const accent = brand.themeColor ?? "#4f46e5";
+  const accent = brand.themeColor ?? DEFAULT_ACCENT;
+  const rawUrl = pageRawUrl(id);
 
-  let src = pageRawUrl(id);
+  let src = rawUrl;
+  let viewerEmail: string | null = null;
   if (page.visibility !== "public") {
     const session = await getSession();
     if (!session) redirect(`/sign-in?callback=/v/${id}`);
     if (!(await isOrgMember(session.user.id, page.organizationId))) {
+      const t = await getTranslations("viewer");
       return (
-        <main
-          style={{
-            maxWidth: 420,
-            margin: "12vh auto",
-            padding: 16,
-            font: "15px system-ui, sans-serif",
-          }}
-        >
-          <h1>No access</h1>
-          <p style={{ opacity: 0.7 }}>
-            This page is private to another organization.
-          </p>
-        </main>
+        <div className={styles.center}>
+          <div className={styles.card}>
+            <h1>{t("noAccessTitle")}</h1>
+            <p>{t("noAccessBody")}</p>
+            <Link href="/pages">{t("backToConsole")}</Link>
+          </div>
+        </div>
       );
     }
+    viewerEmail = session.user.email ?? null;
+    // Shell holds the app-origin session, so it mints the serve-token here and
+    // hands it to the cross-origin frame — no serve→app→serve bounce.
     const k = signServeToken(page.organizationId, session.user.id);
-    src = `${pageRawUrl(id)}?k=${encodeURIComponent(k)}`;
+    src = `${rawUrl}?k=${encodeURIComponent(k)}`;
   }
 
+  const wm = resolveWatermarkDisplay({
+    mode: brand.watermarkMode,
+    scope: brand.watermarkScope,
+    text: brand.exportWatermark,
+    orgName: brand.name,
+    includeViewer: brand.watermarkIncludeViewer,
+    opacity: brand.watermarkOpacity,
+    visibility: page.visibility === "public" ? "public" : "org",
+    viewerEmail,
+  });
+
   return (
-    <div style={shell}>
-      <header style={{ ...bar, borderBottomColor: accent }}>
-        <strong style={{ color: accent }}>{brand.name ?? "Kiosk"}</strong>
-        <span style={{ opacity: 0.8 }}>{page.title ?? id}</span>
-        <span style={{ marginLeft: "auto", display: "flex", gap: 12, opacity: 0.7 }}>
-          <a href={pageRawUrl(id)} target="_blank" rel="noreferrer">
-            open raw
-          </a>
-          <a href={`/report?url=${encodeURIComponent(pageRawUrl(id))}`}>report</a>
-        </span>
-      </header>
-      <iframe
-        src={src}
-        sandbox="allow-scripts"
-        title={page.title ?? "page"}
-        style={{ flex: 1, border: 0, width: "100%" }}
-      />
-    </div>
+    <ViewerFrame
+      src={src}
+      rawUrl={rawUrl}
+      reportHref={`/report?url=${encodeURIComponent(rawUrl)}`}
+      consoleHref="/pages"
+      brandName={brand.name ?? "Kiosk"}
+      accent={accent}
+      title={page.title ?? id}
+      watermark={
+        wm.active && wm.mode === "fullpage" && wm.label
+          ? { label: wm.label, opacity: wm.opacity }
+          : undefined
+      }
+      hideRawLink={wm.hideRawLink}
+    />
   );
 }

@@ -1,0 +1,8 @@
+/* Settings is a config/reading surface. Cap it narrower than the 1600px
+   data-table shell (via the global token) so forms and the branding preview
+   don't stretch on wide screens. The shared .content still supplies gutters
+   and min-width:0; this only narrows the ceiling. API Tokens uses the full
+   width of this container. */
+.container {
+  max-width: var(--settings-content-max);
+}

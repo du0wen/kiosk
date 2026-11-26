@@ -1,26 +1,11 @@
-import { eq } from "drizzle-orm";
-import { requireToken, errorResponse, json } from "@/lib/api";
-import { db } from "@/db";
-import { user, organization } from "@/db/schema";
+import { errorResponse, json } from "@/lib/api";
+import { requireApiAccess } from "@/lib/protection/api-access";
+import { getCallerProfile } from "@/lib/page-operations";
 
 export async function GET(req: Request): Promise<Response> {
   try {
-    const { userId, organizationId, role } = await requireToken(req);
-    const [u] = await db
-      .select({ id: user.id, name: user.name, email: user.email })
-      .from(user)
-      .where(eq(user.id, userId))
-      .limit(1);
-    const [org] = await db
-      .select({
-        id: organization.id,
-        name: organization.name,
-        slug: organization.slug,
-      })
-      .from(organization)
-      .where(eq(organization.id, organizationId))
-      .limit(1);
-    return json({ user: u ?? null, organization: org ?? null, role });
+    const caller = await requireApiAccess(req, { scope: "identity:read" });
+    return json(await getCallerProfile(caller));
   } catch (e) {
     return errorResponse(e);
   }

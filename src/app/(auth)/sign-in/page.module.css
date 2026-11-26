@@ -1,0 +1,13 @@
+.content { display: grid; gap: var(--space-4); }
+.content h1 { font-size: var(--font-size-2xl); text-align: center; }
+.content p { color: var(--text-secondary); font-size: var(--font-size-sm); text-align: center; }
+.form { display: grid; gap: var(--space-3); }
+.form button { justify-content: center; }
+.error { color: var(--text-danger, #b91c1c) !important; font-size: var(--font-size-xs, 0.75rem) !important; }
+.modeToggle { background: none; border: none; color: var(--accent-primary, #0f766e); font-size: var(--font-size-sm); cursor: pointer; text-decoration: underline; justify-self: center; }
+.inviteNotice { font-size: var(--font-size-xs, 0.75rem) !important; color: var(--text-tertiary) !important; }
+.divider { display: flex; align-items: center; gap: var(--space-3); color: var(--text-tertiary); font-size: var(--font-size-xs, 0.75rem); }
+.divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--border-default); }
+.actions { display: grid; gap: var(--space-3); }
+.actions button { justify-content: center; }
+.terms { font-size: var(--font-size-xs, 0.75rem); color: var(--text-tertiary); text-align: center; margin-top: var(--space-2); line-height: 1.4; }

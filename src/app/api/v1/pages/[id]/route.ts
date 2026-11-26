@@ -1,14 +1,11 @@
-import { requireToken, errorResponse, json, ApiError } from "@/lib/api";
+import { errorResponse, json, ApiError } from "@/lib/api";
+import { requireApiAccess } from "@/lib/protection/api-access";
 import {
-  getPage,
-  updatePage,
-  softDeletePage,
-  setPageVisibility,
-  pageShellUrl,
-  pageRawUrl,
-  PageTooLargeError,
-} from "@/lib/pages";
-import { can } from "@/lib/permissions";
+  deletePageForCaller,
+  getPageForCaller,
+  setPageVisibilityForCaller,
+  updatePageForCaller,
+} from "@/lib/page-operations";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -19,14 +16,13 @@ function parseVisibility(v: string | null): "org" | "public" | undefined {
 
 export async function GET(req: Request, { params }: Ctx): Promise<Response> {
   try {
-    const { organizationId } = await requireToken(req);
+    const caller = await requireApiAccess(req, { scope: "pages:read" });
     const { id } = await params;
-    const page = await getPage({ publicId: id, organizationId });
-    if (!page) throw new ApiError(404, "not_found", "Page not found");
+    const page = await getPageForCaller(caller, id);
     return json({
-      id: page.publicId,
-      url: pageShellUrl(page.publicId),
-      rawUrl: pageRawUrl(page.publicId),
+      id: page.id,
+      url: page.url,
+      rawUrl: page.rawUrl,
       title: page.title,
       visibility: page.visibility,
       sizeBytes: page.sizeBytes,
@@ -41,33 +37,27 @@ export async function GET(req: Request, { params }: Ctx): Promise<Response> {
 
 export async function PUT(req: Request, { params }: Ctx): Promise<Response> {
   try {
-    const { userId, organizationId } = await requireToken(req);
+    const caller = await requireApiAccess(req, {
+      scope: "pages:write",
+      policy: "apiWrite",
+    });
     const { id } = await params;
     const html = await req.text();
-    if (!html.trim()) throw new ApiError(400, "bad_request", "Empty body");
     const title = req.headers.get("x-kiosk-title");
     const visibility = parseVisibility(req.headers.get("x-kiosk-visibility"));
-    try {
-      const page = await updatePage({
-        publicId: id,
-        organizationId,
-        userId,
-        html,
-        title: title ?? undefined,
-        visibility,
-      });
-      if (!page) throw new ApiError(404, "not_found", "Page not found");
-      return json({
-        id: page.publicId,
-        url: pageShellUrl(page.publicId),
-        rawUrl: pageRawUrl(page.publicId),
-        visibility: page.visibility,
-        updatedAt: page.updatedAt,
-      });
-    } catch (e) {
-      if (e instanceof PageTooLargeError) throw new ApiError(413, "too_large", e.message);
-      throw e;
-    }
+    const page = await updatePageForCaller(caller, {
+      pageId: id,
+      html,
+      title: title ?? undefined,
+      visibility,
+    });
+    return json({
+      id: page.id,
+      url: page.url,
+      rawUrl: page.rawUrl,
+      visibility: page.visibility,
+      updatedAt: page.updatedAt,
+    });
   } catch (e) {
     return errorResponse(e);
   }
@@ -75,7 +65,10 @@ export async function PUT(req: Request, { params }: Ctx): Promise<Response> {
 
 export async function PATCH(req: Request, { params }: Ctx): Promise<Response> {
   try {
-    const { userId, organizationId, role } = await requireToken(req);
+    const caller = await requireApiAccess(req, {
+      scope: "pages:write",
+      policy: "apiWrite",
+    });
     const { id } = await params;
     const body = (await req.json().catch(() => ({}))) as { visibility?: unknown };
     const visibility = parseVisibility(
@@ -84,17 +77,15 @@ export async function PATCH(req: Request, { params }: Ctx): Promise<Response> {
     if (!visibility) {
       throw new ApiError(400, "bad_request", "visibility must be 'org' or 'public'");
     }
-    const page = await getPage({ publicId: id, organizationId });
-    if (!page) throw new ApiError(404, "not_found", "Page not found");
-    if (!can(role, "page.setVisibility", { isResourceOwner: page.createdBy === userId })) {
-      throw new ApiError(403, "forbidden", "Not allowed to change this page");
-    }
-    const updated = await setPageVisibility({ publicId: id, organizationId, userId, visibility });
+    const updated = await setPageVisibilityForCaller(caller, {
+      pageId: id,
+      visibility,
+    });
     return json({
-      id: updated!.publicId,
-      url: pageShellUrl(updated!.publicId),
-      rawUrl: pageRawUrl(updated!.publicId),
-      visibility: updated!.visibility,
+      id: updated.id,
+      url: updated.url,
+      rawUrl: updated.rawUrl,
+      visibility: updated.visibility,
     });
   } catch (e) {
     return errorResponse(e);
@@ -103,14 +94,12 @@ export async function PATCH(req: Request, { params }: Ctx): Promise<Response> {
 
 export async function DELETE(req: Request, { params }: Ctx): Promise<Response> {
   try {
-    const { userId, organizationId, role } = await requireToken(req);
+    const caller = await requireApiAccess(req, {
+      scope: "pages:write",
+      policy: "apiWrite",
+    });
     const { id } = await params;
-    const page = await getPage({ publicId: id, organizationId });
-    if (!page) throw new ApiError(404, "not_found", "Page not found");
-    if (!can(role, "page.delete", { isResourceOwner: page.createdBy === userId })) {
-      throw new ApiError(403, "forbidden", "Not allowed to delete this page");
-    }
-    await softDeletePage({ publicId: id, organizationId, userId });
+    await deletePageForCaller(caller, id);
     return new Response(null, { status: 204 });
   } catch (e) {
     return errorResponse(e);

@@ -1,0 +1,21 @@
+.field { display: grid; gap: var(--space-2); color: var(--text-primary); }
+.label { font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); }
+.input {
+  width: 100%;
+  min-width: 0;
+  height: var(--control-height-md);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-control);
+  padding: 0 var(--control-padding-x);
+  color: var(--text-primary);
+  background: var(--surface-primary);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.input:hover { border-color: var(--border-strong); }
+.input:focus { border-color: var(--accent-primary); box-shadow: 0 0 0 3px var(--focus-ring); outline: 0; }
+.textarea { min-height: 120px; padding-block: var(--space-3); resize: vertical; }
+.input[type="color"] { width: 64px; padding: 4px; }
+.invalid { border-color: var(--status-danger); }
+.help, .error { font-size: var(--font-size-xs); }
+.help { color: var(--text-tertiary); }
+.error { color: var(--status-danger); }

@@ -1,0 +1,13 @@
+/* Flex-wrap so the bar never forces page-level horizontal overflow at any width
+   (controls wrap onto new rows as space runs out); min-width:0 lets the search
+   field shrink. On mobile each control takes a full row. */
+.toolbar { display: flex; flex-wrap: wrap; align-items: end; gap: var(--space-3); min-width: 0; margin-bottom: var(--space-5); }
+.searchField { display: flex; flex: 2 1 220px; align-items: center; gap: var(--space-2); height: var(--control-height-md); min-width: 0; border: 1px solid var(--border-default); border-radius: var(--radius-control); padding: 0 var(--space-3); color: var(--text-tertiary); background: var(--surface-primary); }
+.searchField:focus-within { border-color: var(--accent-primary); box-shadow: 0 0 0 3px var(--focus-ring); }
+.searchField input { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; color: var(--text-primary); }
+.filter { flex: 1 1 150px; min-width: 0; }
+.buttons { display: flex; flex: 1 1 auto; gap: var(--space-2); align-items: end; }
+@media (max-width: 767px) {
+  .searchField, .filter, .buttons { flex: 1 1 100%; }
+  .buttons { justify-content: flex-start; }
+}

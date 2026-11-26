@@ -1,0 +1,35 @@
+.trigger {
+  display: grid;
+  width: var(--control-height-md);
+  height: var(--control-height-md);
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-control);
+  color: var(--text-secondary);
+  background: none;
+  cursor: pointer;
+}
+.trigger:hover {
+  color: var(--text-primary);
+  background: var(--surface-subtle);
+}
+/* Portaled to <body> with fixed positioning so the DataTable's overflow can
+   never clip it; exact top/left come from computeMenuPosition. */
+.content {
+  position: fixed;
+  z-index: var(--z-menu);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 200px;
+  max-width: calc(100vw - 16px);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-control);
+  padding: var(--space-1);
+  background: var(--surface-primary);
+  box-shadow: var(--shadow-menu);
+}
+.item > * {
+  width: 100%;
+  justify-content: flex-start;
+}

@@ -1,0 +1,8 @@
+.viewport { width: 100%; overflow-x: auto; border: 1px solid var(--border-default); border-radius: var(--radius-panel); background: var(--surface-primary); }
+.table { width: 100%; border-collapse: collapse; table-layout: auto; }
+.table th { height: 40px; padding: 0 var(--space-4); color: var(--text-secondary); background: var(--surface-secondary); font-size: var(--font-size-xs); font-weight: var(--font-weight-medium); text-align: left; white-space: nowrap; }
+.table td { min-width: 0; height: var(--table-row-height); border-top: 1px solid var(--border-subtle); padding: var(--space-3) var(--space-4); color: var(--text-secondary); font-size: var(--font-size-sm); vertical-align: middle; }
+.table tbody tr:hover { background: var(--surface-secondary); }
+.end { text-align: right !important; }
+@media (max-width: 1023px) { .priorityLow { display: none; } }
+@media (max-width: 767px) { .priorityMedium { display: none; } .table th, .table td { padding-inline: var(--space-3); } }

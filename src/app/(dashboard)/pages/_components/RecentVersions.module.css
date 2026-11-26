@@ -1,0 +1,8 @@
+.section { width: 100%; max-width: var(--form-max); margin-top: var(--space-8); }
+.head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-3); }
+.head h2 { font-size: var(--font-size-lg); }
+.viewAll { color: var(--accent-primary); font-size: var(--font-size-sm); }
+.list { display: grid; width: 100%; border: 1px solid var(--border-default); border-radius: var(--radius-panel); overflow: hidden; }
+.list li { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-width: 0; padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border-subtle); font-size: var(--font-size-sm); }
+.list li:last-child { border-bottom: 0; }
+.editor { min-width: 0; overflow: hidden; color: var(--text-tertiary); text-overflow: ellipsis; white-space: nowrap; }

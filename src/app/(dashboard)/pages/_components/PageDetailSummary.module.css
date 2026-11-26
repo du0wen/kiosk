@@ -1,0 +1,7 @@
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-4) var(--space-6); max-width: var(--shell-content-max); }
+.item { display: grid; gap: var(--space-1); min-width: 0; }
+.item dt { color: var(--text-tertiary); font-size: var(--font-size-xs); }
+.item dd { min-width: 0; color: var(--text-primary); }
+.item code { overflow-wrap: anywhere; font-family: var(--font-mono); font-size: var(--font-size-xs); color: var(--text-secondary); }
+.url { display: inline-block; max-width: 100%; }
+@media (max-width: 767px) { .grid { grid-template-columns: 1fr; } }

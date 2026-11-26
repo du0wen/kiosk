@@ -1,11 +1,9 @@
-import { requireToken, errorResponse, json, ApiError } from "@/lib/api";
+import { errorResponse, json } from "@/lib/api";
+import { requireApiAccess } from "@/lib/protection/api-access";
 import {
-  createPage,
-  listPages,
-  pageShellUrl,
-  pageRawUrl,
-  PageTooLargeError,
-} from "@/lib/pages";
+  createPageForCaller,
+  listPagesForCaller,
+} from "@/lib/page-operations";
 
 function parseVisibility(v: string | null): "org" | "public" | undefined {
   if (v === "org" || v === "public") return v;
@@ -14,33 +12,28 @@ function parseVisibility(v: string | null): "org" | "public" | undefined {
 
 export async function POST(req: Request): Promise<Response> {
   try {
-    const { userId, organizationId } = await requireToken(req);
+    const caller = await requireApiAccess(req, {
+      scope: "pages:write",
+      policy: "apiWrite",
+    });
     const html = await req.text();
-    if (!html.trim()) throw new ApiError(400, "bad_request", "Empty body");
     const title = req.headers.get("x-kiosk-title");
     const visibility = parseVisibility(req.headers.get("x-kiosk-visibility"));
-    try {
-      const page = await createPage({
-        organizationId,
-        userId,
-        html,
-        title: title ?? undefined,
-        visibility,
-      });
-      return json(
-        {
-          id: page.publicId,
-          url: pageShellUrl(page.publicId),
-          rawUrl: pageRawUrl(page.publicId),
-          visibility: page.visibility,
-          createdAt: page.createdAt,
-        },
-        201,
-      );
-    } catch (e) {
-      if (e instanceof PageTooLargeError) throw new ApiError(413, "too_large", e.message);
-      throw e;
-    }
+    const page = await createPageForCaller(caller, {
+      html,
+      title: title ?? undefined,
+      visibility,
+    });
+    return json(
+      {
+        id: page.id,
+        url: page.url,
+        rawUrl: page.rawUrl,
+        visibility: page.visibility,
+        createdAt: page.createdAt,
+      },
+      201,
+    );
   } catch (e) {
     return errorResponse(e);
   }
@@ -48,14 +41,14 @@ export async function POST(req: Request): Promise<Response> {
 
 export async function GET(req: Request): Promise<Response> {
   try {
-    const { organizationId } = await requireToken(req);
+    const caller = await requireApiAccess(req, { scope: "pages:read" });
     const cursor = new URL(req.url).searchParams.get("cursor");
-    const { items, nextCursor } = await listPages({ organizationId, cursor });
+    const { items, nextCursor } = await listPagesForCaller(caller, { cursor });
     return json({
       pages: items.map((p) => ({
-        id: p.publicId,
-        url: pageShellUrl(p.publicId),
-        rawUrl: pageRawUrl(p.publicId),
+        id: p.id,
+        url: p.url,
+        rawUrl: p.rawUrl,
         title: p.title,
         sizeBytes: p.sizeBytes,
         viewCount: p.viewCount,

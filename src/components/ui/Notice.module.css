@@ -1,0 +1,6 @@
+.notice { display: flex; align-items: flex-start; gap: var(--space-3); border: 1px solid var(--border-default); border-radius: var(--radius-control); padding: var(--space-3) var(--space-4); font-size: var(--font-size-sm); }
+.notice svg { flex: 0 0 auto; margin-top: 2px; }
+.info { color: var(--text-secondary); background: var(--surface-secondary); }
+.success { color: var(--status-success); border-color: var(--color-green-600); background: var(--status-success-subtle); }
+.warning { color: var(--status-warning); border-color: var(--color-amber-600); background: var(--status-warning-subtle); }
+.danger { color: var(--status-danger); border-color: var(--status-danger); background: var(--status-danger-subtle); }

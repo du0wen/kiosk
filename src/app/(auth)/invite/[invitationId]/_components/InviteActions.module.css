@@ -1,0 +1,3 @@
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-6); }
+.actions button { justify-content: center; }
+.actions > :last-child:not(button) { grid-column: 1 / -1; }

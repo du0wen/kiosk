@@ -1,0 +1,21 @@
+/* Desktop: no content (search moved into each page's toolbar) → hidden, so the
+   workspace's first grid row collapses to 0 (no empty 64px band, no negative
+   margin). Mobile: shown for the navigation menu button. */
+.topbar {
+  position: sticky;
+  z-index: var(--z-sticky);
+  top: 0;
+  min-width: 0;
+  display: none;
+  height: var(--shell-header-height);
+  align-items: center;
+  gap: var(--space-3);
+  border-bottom: 1px solid var(--border-default);
+  padding: 0 var(--shell-content-gutter);
+  background: var(--surface-primary);
+}
+.menu { display: none; }
+@media (max-width: 767px) {
+  .topbar { display: flex; }
+  .menu { display: inline-flex; }
+}

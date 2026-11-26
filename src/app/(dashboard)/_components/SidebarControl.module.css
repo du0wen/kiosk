@@ -1,0 +1,2 @@
+.control { display: grid; min-height: 40px; grid-template-columns: 17px minmax(0, 1fr) 15px; align-items: center; gap: var(--space-3); border-radius: var(--radius-control); padding: 0 var(--space-3); color: var(--text-secondary); font-size: var(--font-size-sm); }
+.control:hover { color: var(--text-primary); background: var(--surface-secondary); }

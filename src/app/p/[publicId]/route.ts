@@ -1,4 +1,4 @@
-import { getPublicPage, incrementViewCount } from "@/lib/pages";
+import { getPageContent, getPublicPage, incrementViewCount } from "@/lib/pages";
 import { servedPageHeaders, notFoundResponse } from "@/lib/serving";
 import { verifyServeToken } from "@/lib/serve-token";
 
@@ -20,6 +20,24 @@ export async function GET(req: Request, { params }: Ctx): Promise<Response> {
   }
 
   // Best-effort; do not block the response on the counter write.
+  const headers = servedPageHeaders({
+    visibility: page.visibility as "org" | "public",
+    contentHash: page.contentHash,
+  });
+  if (page.visibility === "public" && headers.etag === req.headers.get("if-none-match")) {
+    return new Response(null, { status: 304, headers });
+  }
   void incrementViewCount(page.id).catch(() => {});
-  return new Response(page.contentHtml, { headers: servedPageHeaders() });
+  try {
+    return new Response(await getPageContent(page), { headers });
+  } catch {
+    return new Response("Page temporarily unavailable", {
+      status: 503,
+      headers: servedPageHeaders({
+        visibility: page.visibility as "org" | "public",
+        contentHash: page.contentHash,
+        error: true,
+      }),
+    });
+  }
 }

@@ -1,0 +1,6 @@
+.wrapper { position: relative; display: grid; min-width: 0; grid-template-columns: minmax(0, 1fr) 36px; align-items: start; gap: var(--space-2); }
+.popover { right: auto; width: calc(100% + 60px); }
+.switcher { display: grid; height: 52px; grid-template-columns: 32px minmax(0, 1fr) 16px; align-items: center; gap: var(--space-2); border: 1px solid var(--border-default); border-radius: var(--radius-control); padding: 0 var(--space-3); background: var(--surface-secondary); }
+.switcher:hover { border-color: var(--border-strong); background: var(--surface-subtle); }
+.avatar { display: grid; width: 28px; height: 28px; place-items: center; border-radius: var(--radius-sm); color: var(--text-inverse); background: var(--surface-inverse); font-size: 10px; font-weight: var(--font-weight-semibold); }
+.meta { display: grid; min-width: 0; }.meta strong { overflow: hidden; font-size: var(--font-size-sm); text-overflow: ellipsis; white-space: nowrap; }.meta small { color: var(--text-tertiary); font-size: 10px; text-transform: uppercase; }.createButton { margin-top: 8px; }.createForm { display: grid; gap: var(--space-3); }

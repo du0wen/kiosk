@@ -1,0 +1,6 @@
+.iconButton { width: var(--control-height-md); padding: 0; }
+/* Touch targets: reach the 44px recommendation on mobile. min-height wins over
+   the fixed control height without a specificity fight. */
+@media (max-width: 767px) {
+  .iconButton { width: var(--control-height-lg); min-height: var(--control-height-lg); }
+}

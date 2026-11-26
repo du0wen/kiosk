@@ -51,13 +51,13 @@ describe("POST /api/cli/token", () => {
     expect((await POST(req("Bearer nope"))).status).toBe(401);
   });
 
-  it("mints a durable kiosk_live_ token for a valid OIDC token", async () => {
+  it("mints a durable kiosk_api_ token for a valid OIDC token", async () => {
     principal = await createPrincipal();
     const at = await seedAccessToken(principal.userId);
     const res = await POST(req(`Bearer ${at}`));
     expect(res.status).toBe(200);
     const { token } = (await res.json()) as { token: string };
-    expect(token.startsWith("kiosk_live_")).toBe(true);
+    expect(token.startsWith("kiosk_api_")).toBe(true);
     // The minted token authenticates against the same org.
     const identity = await verifyToken(token);
     expect(identity?.organizationId).toBe(principal.organizationId);

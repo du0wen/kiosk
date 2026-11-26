@@ -1,0 +1,26 @@
+.toolbar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-4); }
+.toolbar > :first-child { flex: 1; }
+.tokenName { display: flex; align-items: center; gap: var(--space-3); min-width: 180px; }
+.tokenName > span:last-child { display: grid; gap: 2px; min-width: 0; }
+.tokenName strong { font-size: var(--font-size-md); font-weight: var(--font-weight-semibold); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tokenName code { color: var(--text-secondary); font-family: var(--font-mono); font-size: var(--font-size-xs); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tokenName small { color: var(--text-tertiary); font-size: var(--font-size-xs); }
+.tokenName small code { color: inherit; }
+.created code { color: var(--text-secondary); font-family: var(--font-mono); font-size: var(--font-size-xs); overflow-wrap: anywhere; }
+.keyIcon { display: grid; place-items: center; width: 32px; height: 32px; flex: 0 0 32px; border-radius: var(--radius-control); color: var(--accent-primary); background: var(--accent-subtle); }
+.created { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); width: 100%; }
+.created > div { display: grid; gap: var(--space-1); min-width: 0; }
+.createForm { display: grid; gap: var(--space-5); }
+.scopeFieldset { display: grid; gap: var(--space-2); min-width: 0; border: 0; padding: 0; }
+.scopeFieldset legend { padding: 0; font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); }
+.scopeFieldset > p { margin: 0; color: var(--text-tertiary); font-size: var(--font-size-xs); }
+.scopeOptions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
+.scopeOptions label { display: flex; align-items: flex-start; gap: var(--space-2); min-width: 0; border: 1px solid var(--border-default); border-radius: var(--radius-control); padding: var(--space-3); cursor: pointer; }
+.scopeOptions label:has(input:focus-visible) { border-color: var(--accent-primary); box-shadow: 0 0 0 3px var(--focus-ring); }
+.scopeOptions input { width: 16px; height: 16px; flex: 0 0 16px; margin: 2px 0 0; accent-color: var(--accent-primary); }
+.scopeOptions span { display: grid; gap: 2px; min-width: 0; }
+.scopeOptions strong { font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); }
+.scopeOptions small { color: var(--text-tertiary); font-size: var(--font-size-xs); line-height: 1.4; }
+.scopes { display: flex; flex-wrap: wrap; gap: var(--space-1); max-width: 280px; }
+@media (max-width: 767px) { .toolbar { align-items: stretch; flex-direction: column-reverse; } .toolbar button { justify-content: center; } .created { align-items: flex-start; } }
+@media (max-width: 560px) { .scopeOptions { grid-template-columns: 1fr; } }

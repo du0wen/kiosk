@@ -1,0 +1,20 @@
+.toolbar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-4); color: var(--text-secondary); font-size: var(--font-size-sm); }
+.person { display: flex; align-items: center; gap: var(--space-3); min-width: 180px; }
+.person > span, .mail { display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 34px; border-radius: var(--radius-round); color: var(--accent-primary); background: var(--accent-subtle); font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); }
+.person div { display: grid; gap: 1px; }
+.person strong { font-size: var(--font-size-md); }
+.person small, .invites small { color: var(--text-secondary); font-size: var(--font-size-xs); }
+.roleSelect { min-width: 110px; height: var(--control-height-sm); border: 1px solid var(--border-default); border-radius: var(--radius-control); background: var(--surface-primary); color: var(--text-primary); padding: 0 var(--space-2); }
+.pending { margin-top: var(--space-8); }
+.pending > div:first-child h2 { font-size: var(--font-size-lg); }
+.pending > div:first-child p, .noPending { color: var(--text-secondary); font-size: var(--font-size-sm); }
+.invites { margin-top: var(--space-4); border-top: 1px solid var(--border-default); }
+.invites > div { display: flex; align-items: center; gap: var(--space-3); min-height: var(--table-row-height); border-bottom: 1px solid var(--border-default); }
+.invites > div > span:nth-child(2) { display: grid; flex: 1; min-width: 0; }
+.invites > div > span:nth-child(2) > * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.invites > div > :last-child { flex: 0 0 auto; }
+.mail { border-radius: var(--radius-control); }
+.inviteForm { display: grid; gap: var(--space-4); }
+.link { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); width: 100%; }
+.link > span { display: grid; gap: var(--space-1); min-width: 0; }
+.link code { font-family: var(--font-mono); font-size: var(--font-size-xs); overflow-wrap: anywhere; }

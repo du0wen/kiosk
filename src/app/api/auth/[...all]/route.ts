@@ -1,4 +1,10 @@
-import { toNextJsHandler } from "better-auth/next-js";
-import { auth } from "@/lib/auth";
+import { getAuth } from "@/lib/auth";
+import { isSetupCompletedLive } from "@/lib/setup/config-file";
 
-export const { GET, POST } = toNextJsHandler(auth);
+async function handle(req: Request): Promise<Response> {
+  await isSetupCompletedLive();
+  return getAuth().handler(req);
+}
+
+export const GET = handle;
+export const POST = handle;

@@ -1,16 +1,25 @@
 import { ApiError, errorResponse, json } from "@/lib/api";
 import { resolveOidcAccessToken } from "@/lib/oidc-token";
 import { resolveUserOrg } from "@/lib/console";
+import {
+  enforceIdentifierLimit,
+  enforceRequestIpLimit,
+} from "@/lib/protection/guard";
 import { createToken } from "@/lib/token";
 
 /**
  * Exchange a Better Auth OIDC access token (obtained by `kiosk login`) for a
- * durable `kiosk_live_` API token. OIDC access tokens expire; long-running agents
+ * durable `kiosk_api_` API token. OIDC access tokens expire; long-running agents
  * need a token that doesn't, so login mints one here right after the OAuth dance.
  * The REST API (/api/v1) is unchanged — it keeps validating api_tokens.
  */
 export async function POST(req: Request): Promise<Response> {
   try {
+    await enforceRequestIpLimit(
+      req,
+      "cliMintPreAuth",
+      "cli-token-pre-auth",
+    );
     const match = (req.headers.get("authorization") ?? "").match(
       /^Bearer\s+(.+)$/i,
     );
@@ -23,6 +32,11 @@ export async function POST(req: Request): Promise<Response> {
     if (!organizationId) {
       throw new ApiError(400, "no_org", "No organization for this user");
     }
+    await enforceIdentifierLimit(
+      "cliMintPostAuth",
+      "cli-token-caller",
+      [identity.userId, organizationId],
+    );
     const { plaintext } = await createToken({
       userId: identity.userId,
       organizationId,

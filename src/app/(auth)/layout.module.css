@@ -1,0 +1,5 @@
+.canvas { min-height: 100vh; display: grid; align-content: center; justify-items: center; gap: var(--space-6); padding: var(--space-6); background: var(--surface-canvas); }
+.brand { display: flex; align-items: center; gap: var(--space-2); font-size: var(--font-size-xl); }
+.brand span { display: inline-flex; width: 32px; height: 32px; align-items: center; justify-content: center; flex-shrink: 0; }
+.panel { width: min(100%, 440px); border: 1px solid var(--border-default); border-radius: var(--radius-panel); padding: var(--space-8); background: var(--surface-primary); box-shadow: var(--shadow-sm); }
+@media (max-width: 520px) { .canvas { padding: var(--space-4); } .panel { padding: var(--space-6) var(--space-4); } }

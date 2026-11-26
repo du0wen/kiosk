@@ -1,0 +1,158 @@
+:root {
+  /* Primitive colors */
+  --color-neutral-0: #ffffff;
+  --color-neutral-25: #fcfcfd;
+  --color-neutral-50: #f7f8fa;
+  --color-neutral-100: #f0f1f3;
+  --color-neutral-200: #e1e3e6;
+  --color-neutral-300: #c9cdd2;
+  --color-neutral-400: #9da3ae;
+  --color-neutral-500: #6f7782;
+  --color-neutral-600: #525a65;
+  --color-neutral-700: #3b424c;
+  --color-neutral-800: #272d35;
+  --color-neutral-900: #171b21;
+  --color-neutral-950: #0d1014;
+  --color-teal-50: #f0fdfa;
+  --color-teal-100: #ccfbf1;
+  --color-teal-200: #99f6e4;
+  --color-teal-500: #14b8a6;
+  --color-teal-600: #0f766e;
+  --color-teal-700: #0f5f59;
+  --color-green-50: #f0fdf4;
+  --color-green-600: #15803d;
+  --color-amber-50: #fffbeb;
+  --color-amber-600: #b45309;
+  --color-red-50: #fef2f2;
+  --color-red-600: #dc2626;
+  --color-red-700: #b91c1c;
+
+  /* Semantic colors */
+  --surface-canvas: var(--color-neutral-50);
+  --surface-primary: var(--color-neutral-0);
+  --surface-secondary: var(--color-neutral-25);
+  --surface-subtle: var(--color-neutral-100);
+  --surface-inverse: var(--color-neutral-900);
+  --surface-overlay: rgb(13 16 20 / 48%);
+  --text-primary: var(--color-neutral-900);
+  --text-secondary: var(--color-neutral-600);
+  --text-tertiary: var(--color-neutral-500);
+  --text-inverse: var(--color-neutral-0);
+  --text-disabled: var(--color-neutral-400);
+  --border-subtle: var(--color-neutral-100);
+  --border-default: var(--color-neutral-200);
+  --border-strong: var(--color-neutral-300);
+  --accent-primary: var(--color-teal-600);
+  --accent-hover: var(--color-teal-700);
+  --accent-subtle: var(--color-teal-50);
+  --status-success: var(--color-green-600);
+  --status-success-subtle: var(--color-green-50);
+  --status-warning: var(--color-amber-600);
+  --status-warning-subtle: var(--color-amber-50);
+  --status-danger: var(--color-red-600);
+  --status-danger-hover: var(--color-red-700);
+  --status-danger-subtle: var(--color-red-50);
+  --focus-ring: rgb(15 118 110 / 28%);
+
+  /* Typography */
+  --font-sans: "Inter", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.8125rem;
+  --font-size-md: 0.875rem;
+  --font-size-lg: 1rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Spacing */
+  --space-0: 0;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  /* Shape and elevation */
+  --radius-sm: 4px;
+  --radius-control: 6px;
+  --radius-panel: 8px;
+  --radius-round: 999px;
+  --shadow-sm: 0 1px 2px rgb(13 16 20 / 6%);
+  --shadow-menu: 0 8px 24px rgb(13 16 20 / 12%);
+  --shadow-dialog: 0 24px 64px rgb(13 16 20 / 20%);
+
+  /* Controls */
+  --control-height-sm: 28px;
+  --control-height-md: 36px;
+  --control-height-lg: 44px;
+  --control-padding-x: 12px;
+  --icon-size-sm: 14px;
+  --icon-size-md: 18px;
+  --icon-size-lg: 20px;
+
+  /* Dashboard layout */
+  --shell-sidebar-width: 240px;
+  --shell-header-height: 64px;
+  --shell-content-max: 1600px;
+  --shell-content-gutter: 40px;
+  /* Settings is a reading/config surface, capped narrower than the 1600px
+     data-table shell so forms and the branding preview don't stretch. */
+  --settings-content-max: 1200px;
+  --form-max: 640px;
+  --table-row-height: 56px;
+  --z-sticky: 20;
+  --z-drawer: 40;
+  --z-menu: 60;
+  --z-dialog: 80;
+  --transition-fast: 120ms ease;
+  --transition-standard: 180ms ease;
+}
+
+/* Wide screens: step typography and row height up so 1600px content and dense
+   tables don't read as small at 1920x1080. Structure/layout are unchanged. */
+@media (min-width: 1600px) {
+  :root {
+    --font-size-md: 0.9375rem;
+    --font-size-lg: 1.0625rem;
+    --font-size-xl: 1.375rem;
+    --font-size-2xl: 1.75rem;
+    --table-row-height: 60px;
+  }
+}
+
+@media (max-width: 1439px) {
+  :root {
+    --shell-sidebar-width: 220px;
+    --shell-content-gutter: 32px;
+  }
+}
+
+@media (max-width: 1023px) {
+  :root {
+    --shell-content-gutter: 24px;
+  }
+}
+
+@media (max-width: 767px) {
+  :root {
+    --shell-header-height: 56px;
+    --shell-content-gutter: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --transition-fast: 0ms;
+    --transition-standard: 0ms;
+  }
+}

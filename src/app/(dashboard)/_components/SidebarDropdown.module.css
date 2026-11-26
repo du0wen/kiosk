@@ -1,0 +1,15 @@
+.root { position: relative; min-width: 0; }
+.trigger { width: 100%; border: 0; padding: 0; color: inherit; background: transparent; font: inherit; text-align: left; cursor: pointer; }
+.trigger:disabled { cursor: wait; }
+.trigger:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.popover { position: absolute; z-index: var(--z-menu); left: 0; right: 0; display: grid; gap: 2px; border: 1px solid var(--border-default); border-radius: var(--radius-control); padding: var(--space-1); background: var(--surface-primary); box-shadow: var(--shadow-menu); }
+.top { bottom: calc(100% + var(--space-2)); }
+.bottom { top: calc(100% + var(--space-2)); }
+.option { display: grid; min-width: 0; height: 36px; grid-template-columns: minmax(0, 1fr) 16px; align-items: center; gap: var(--space-2); border: 0; border-radius: var(--radius-control); padding: 0 var(--space-2); color: var(--text-secondary); background: transparent; font-size: var(--font-size-sm); text-align: left; cursor: pointer; }
+.option span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.option:hover, .option:focus-visible { color: var(--text-primary); background: var(--surface-secondary); outline: 0; }
+.selected { color: var(--text-primary); background: var(--surface-subtle); font-weight: var(--font-weight-medium); }
+.selected svg { color: var(--accent-primary); }
+.spinner { animation: spin 800ms linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }

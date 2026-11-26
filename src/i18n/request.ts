@@ -1,14 +1,9 @@
 import { getRequestConfig } from "next-intl/server";
 import { cookies, headers } from "next/headers";
-
-const SUPPORTED = ["en", "zh"] as const;
-type Locale = (typeof SUPPORTED)[number];
+import { defaultLocale, isLocale, type Locale } from "./config";
 
 function pick(value: string | undefined | null): Locale {
-  if (value && (SUPPORTED as readonly string[]).includes(value)) {
-    return value as Locale;
-  }
-  return "en";
+  return isLocale(value) ? value : defaultLocale;
 }
 
 export default getRequestConfig(async () => {
