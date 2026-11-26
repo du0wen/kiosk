@@ -22,10 +22,14 @@
 
 # cli build output
 /cli/dist/
+/cli/node_modules/
+/cli-rs/target/
 
 # render service (standalone package)
 /render/node_modules/
 /render/test-results/
+/render/_select_drive.mjs
+/logs/
 
 # misc
 .DS_Store
@@ -40,6 +44,14 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 !.env.example
+
+# local content storage
+/data/
+.kiosk/
+/.pnpm-store/
+
+# local agent instructions
+AGENTS.md
 
 # vercel
 .vercel
