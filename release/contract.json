@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "units": {
+    "web": "0.1.0",
+    "render": "0.1.0",
+    "typescriptCli": "0.1.0",
+    "rustCli": "0.1.0"
+  },
+  "migrationHead": "0017_steady_vulture",
+  "requiredOwnerInputs": [
+    "productionAppOrigin",
+    "productionServeOrigin",
+    "githubRepository",
+    "deploymentProvider",
+    "oauthApplications",
+    "neonBranchStrategy",
+    "objectStorage",
+    "monitoringSink",
+    "retentionPolicy"
+  ]
+}

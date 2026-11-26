@@ -1,0 +1,136 @@
+name: Verify
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_call:
+    inputs:
+      require_neon:
+        description: Fail when the Neon integration secret is unavailable.
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: "true"
+
+jobs:
+  web-unit:
+    name: Web and deterministic tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm verify:unit
+      - run: pnpm verify:web
+
+  typescript-cli:
+    name: TypeScript CLI fallback
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -C cli build
+
+  rust-cli:
+    name: Rust CLI
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.85.0
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: cli-rs
+      - run: cargo fmt --manifest-path cli-rs/Cargo.toml --check
+      - run: cargo clippy --manifest-path cli-rs/Cargo.toml --all-targets -- -D warnings
+      - run: cargo test --manifest-path cli-rs/Cargo.toml
+      - run: cargo build --release --manifest-path cli-rs/Cargo.toml
+
+  render:
+    name: Render service
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: render/pnpm-lock.yaml
+      - run: pnpm -C render install --frozen-lockfile
+      - run: pnpm -C render exec playwright install --with-deps chromium
+      - run: pnpm verify:render
+
+  neon:
+    name: Neon integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+      APP_ORIGIN: http://localhost:3000
+      SERVE_ORIGIN: http://serve.kiosk.test:3000
+      BETTER_AUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_ORIGIN: http://localhost:3000
+      BETTER_AUTH_SECRET: BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=
+      GOOGLE_CLIENT_ID: test-client
+      GOOGLE_CLIENT_SECRET: test-secret
+      RENDER_SERVICE_URL: http://localhost:8787
+      RENDER_SHARED_SECRET: BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=
+      CONTENT_STORAGE_MODE: database
+      STORAGE_CREDENTIAL_KEY: BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=
+    steps:
+      - name: Record unavailable integration gate
+        if: ${{ env.DATABASE_URL == '' }}
+        env:
+          REQUIRE_NEON: ${{ inputs.require_neon || false }}
+        run: |
+          echo "### Neon integration: blocked" >> "$GITHUB_STEP_SUMMARY"
+          echo "Configure the TEST_DATABASE_URL repository secret before making this a required check." >> "$GITHUB_STEP_SUMMARY"
+          if [ "$REQUIRE_NEON" = "true" ]; then
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+        if: ${{ env.DATABASE_URL != '' }}
+      - uses: pnpm/action-setup@v4
+        if: ${{ env.DATABASE_URL != '' }}
+        with:
+          version: 10.33.0
+      - uses: actions/setup-node@v4
+        if: ${{ env.DATABASE_URL != '' }}
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+        if: ${{ env.DATABASE_URL != '' }}
+      - run: pnpm verify:db
+        if: ${{ env.DATABASE_URL != '' }}

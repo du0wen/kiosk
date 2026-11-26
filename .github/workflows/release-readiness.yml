@@ -1,0 +1,60 @@
+name: Release readiness
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    uses: ./.github/workflows/ci.yml
+    with:
+      require_neon: true
+    secrets: inherit
+
+  release-contract:
+    name: Production release contract
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production
+    env:
+      NODE_ENV: production
+      APP_ORIGIN: ${{ vars.APP_ORIGIN }}
+      SERVE_ORIGIN: ${{ vars.SERVE_ORIGIN }}
+      BETTER_AUTH_URL: ${{ vars.APP_ORIGIN }}
+      NEXT_PUBLIC_APP_ORIGIN: ${{ vars.APP_ORIGIN }}
+      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      GITHUB_CLIENT_ID: ${{ vars.OAUTH_GITHUB_CLIENT_ID }}
+      GITHUB_CLIENT_SECRET: ${{ secrets.OAUTH_GITHUB_CLIENT_SECRET }}
+      GOOGLE_CLIENT_ID: ${{ vars.OAUTH_GOOGLE_CLIENT_ID }}
+      GOOGLE_CLIENT_SECRET: ${{ secrets.OAUTH_GOOGLE_CLIENT_SECRET }}
+      RENDER_SERVICE_URL: ${{ vars.RENDER_SERVICE_URL }}
+      RENDER_SHARED_SECRET: ${{ secrets.RENDER_SHARED_SECRET }}
+      CONTENT_STORAGE_MODE: ${{ vars.CONTENT_STORAGE_MODE }}
+      STORAGE_CREDENTIAL_KEY: ${{ secrets.STORAGE_CREDENTIAL_KEY }}
+      STORAGE_ALLOWED_ENDPOINT_HOSTS: ${{ vars.STORAGE_ALLOWED_ENDPOINT_HOSTS }}
+      MCP_ALLOWED_HOSTS: ${{ vars.MCP_ALLOWED_HOSTS }}
+      MCP_ALLOWED_ORIGINS: ${{ vars.MCP_ALLOWED_ORIGINS }}
+      RATE_LIMIT_REDIS_REST_URL: ${{ vars.RATE_LIMIT_REDIS_REST_URL }}
+      RATE_LIMIT_REDIS_REST_TOKEN: ${{ secrets.RATE_LIMIT_REDIS_REST_TOKEN }}
+      RATE_LIMIT_KEY_SECRET: ${{ secrets.RATE_LIMIT_KEY_SECRET }}
+      TRUSTED_CLIENT_IP_HEADERS: ${{ vars.TRUSTED_CLIENT_IP_HEADERS }}
+      KIOSK_RELEASE_ID: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm config:check
+      - run: pnpm protection:smoke
+      - run: pnpm cli:release:check
+      - run: pnpm release:inventory
+      - run: git diff --check

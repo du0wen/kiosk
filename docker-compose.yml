@@ -1,0 +1,95 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: kiosk-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-kiosk}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kiosk_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-kiosk}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kiosk} -d ${POSTGRES_DB:-kiosk}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kiosk-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: kiosk-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - kiosk-net
+
+  render:
+    build:
+      context: ./render
+      dockerfile: Dockerfile
+    container_name: kiosk-render
+    restart: unless-stopped
+    environment:
+      PORT: 4000
+      RENDER_SHARED_SECRET: ${RENDER_SHARED_SECRET}
+      MAX_HTML_BYTES: 10485760
+    networks:
+      # Air-gapped rendering network: internal only, no outbound Internet access
+      - kiosk-render-airgap
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kiosk-web
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      render:
+        condition: service_started
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-kiosk}:${POSTGRES_PASSWORD:-kiosk_secret}@postgres:5432/${POSTGRES_DB:-kiosk}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+      APP_ORIGIN: ${APP_ORIGIN:-http://localhost:3000}
+      SERVE_ORIGIN: ${SERVE_ORIGIN:-http://serve.kiosk.test:3000}
+      RENDER_SERVICE_URL: http://render:4000
+      RENDER_SHARED_SECRET: ${RENDER_SHARED_SECRET}
+      CONTENT_STORAGE_MODE: ${CONTENT_STORAGE_MODE:-external}
+      STORAGE_LOCAL_DIR: ${STORAGE_LOCAL_DIR:-/var/lib/kiosk/storage}
+      KIOSK_CONFIG_FILE: ${KIOSK_CONFIG_FILE:-/etc/kiosk/kiosk.config.json}
+      STORAGE_CREDENTIAL_KEY: ${STORAGE_CREDENTIAL_KEY}
+    volumes:
+      - kiosk_config:/etc/kiosk
+      - kiosk_storage:/var/lib/kiosk/storage
+    networks:
+      - kiosk-net
+      - kiosk-render-airgap
+
+volumes:
+  postgres_data:
+  redis_data:
+  kiosk_config:
+  kiosk_storage:
+
+networks:
+  kiosk-net:
+    driver: bridge
+  kiosk-render-airgap:
+    driver: bridge
+    internal: true # Disables outbound external Internet traffic during rendering

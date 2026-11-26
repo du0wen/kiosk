@@ -1,0 +1,11 @@
+node_modules
+.next
+.git
+.kiosk
+cli-rs/target
+cli/dist
+coverage
+logs
+*.log
+.env
+.env.local
