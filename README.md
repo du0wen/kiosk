@@ -3,6 +3,7 @@
 > **Self-contained HTML sharing and publishing platform designed for AI coding assistants (Claude Code, Codex, Cursor, etc.).**
 > Publish AI-generated single-page HTML artifacts into shareable, access-controlled URLs with strict zero-network CSP isolation, organization multi-tenancy, and MCP integration.
 
+[![Website](https://img.shields.io/badge/Website-kioskai.dev-0f766e)](https://kioskai.dev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)](https://www.typescriptlang.org/)
 [![Rust CLI](https://img.shields.io/badge/CLI-Rust-orange)](packages/cli/)
@@ -161,7 +162,8 @@ For detailed configuration instructions including reverse proxy and domain setup
 │   │   │   └── styles/     # Design tokens & base CSS
 │   │   ├── public/         # Brand icons & static assets
 │   │   └── Dockerfile      # Production container image
-│   └── render/             # Isolated Chromium export rendering microservice
+│   ├── render/             # Isolated Chromium export rendering microservice
+│   └── site/               # Static open-source portal (Cloudflare Pages → kioskai.dev)
 ├── packages/
 │   └── cli/                # Native Rust CLI & shared agent skill contracts
 ├── docs/                   # User & operations documentation

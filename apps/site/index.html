@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kiosk — Self-Contained HTML Publishing for AI Coding Assistants</title>
+  <meta name="description" content="Publish AI-generated single-page HTML artifacts into shareable, organization-scoped URLs with zero-network CSP isolation, Rust CLI, full-page watermarks, and native MCP." />
+  <meta property="og:title" content="Kiosk — Publish AI-generated HTML with zero-network isolation" />
+  <meta property="og:description" content="Open-source HTML publishing platform for Claude Code, Codex, and Cursor with double-origin isolation, Rust CLI, org templates, and MCP 2.0." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://kioskai.dev" />
+  <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/apple-icon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        <img src="/icon.svg" alt="Kiosk" />
+        <span>Kiosk</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="#features" data-i18n="nav.features">Features</a>
+        <a href="#security" data-i18n="nav.security">Security</a>
+        <a href="#install" data-i18n="nav.install">Install</a>
+        <a href="#mcp" data-i18n="nav.mcp">MCP</a>
+      </nav>
+      <div class="header-actions">
+        <button id="lang-toggle" class="lang-btn" type="button" aria-label="Switch language">中文</button>
+        <a class="btn btn-secondary btn-sm" href="https://github.com/du0wen/kiosk" target="_blank" rel="noreferrer">GitHub</a>
+        <a class="btn btn-primary btn-sm" data-app-link href="https://app.kioskai.dev" data-i18n="nav.console">Open Console</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-grid">
+        <div>
+          <a class="pill" href="https://github.com/du0wen/kiosk/releases/tag/v0.1.0" target="_blank" rel="noreferrer">
+            <span class="pill-dot"></span>
+            <span data-i18n="hero.badge">Open Source · MIT License · v0.1.0</span>
+          </a>
+          <h1 data-i18n="hero.title">Publish AI-generated HTML with zero-network isolation.</h1>
+          <p class="hero-sub" data-i18n="hero.sub">
+            Turn single-file HTML artifacts from Claude Code, Codex, and Cursor into shareable, organization-scoped URLs with strict CSP sandboxing, full-page watermarks, and native MCP.
+          </p>
+          <div class="hero-cta">
+            <a class="btn btn-primary" data-app-link href="https://app.kioskai.dev" data-i18n="hero.ctaPrimary">Launch Console</a>
+            <a class="btn btn-secondary" href="https://github.com/du0wen/kiosk" target="_blank" rel="noreferrer" data-i18n="hero.ctaGithub">View on GitHub</a>
+            <a class="btn btn-secondary" href="https://github.com/du0wen/kiosk/blob/main/docs/self-hosting.md" target="_blank" rel="noreferrer" data-i18n="hero.ctaSelfHost">Self-Host Guide</a>
+          </div>
+          <div class="quick-cmd">
+            <code><span class="prompt">$</span>curl -LsSf https://github.com/du0wen/kiosk/releases/latest/download/kiosk-cli-installer.sh | sh</code>
+            <button id="hero-copy-btn" class="copy-btn" data-copy-btn type="button">Copy</button>
+          </div>
+        </div>
+
+        <div class="preview-stack">
+          <div class="window-card terminal">
+            <div class="window-bar">
+              <div class="dots"><span></span><span></span><span></span></div>
+              <span>kiosk-cli v0.1.0</span>
+            </div>
+            <div class="terminal-body">
+              <div><span class="t-accent">$</span> kiosk publish ./q4-revenue-dashboard.html</div>
+              <div class="t-dim">Uploading 42.8 KB to Acme Workspace (org-private)...</div>
+              <div><span class="t-green">✓</span> Published <span class="t-accent">https://app.kioskai.dev/v/k8f2m9p4x1q7</span></div>
+              <div class="t-dim">&nbsp;&nbsp;sandbox → https://&lt;serve-origin&gt;/p/k8f2m9p4x1q7</div>
+            </div>
+          </div>
+
+          <div class="window-card">
+            <div class="window-bar">
+              <div class="dots"><span></span><span></span><span></span></div>
+              <span>app.kioskai.dev/v/k8f2m9p4x1q7</span>
+            </div>
+            <div class="shell-preview">
+              <div class="shell-watermark" aria-hidden="true">
+                <span>ACME · INTERNAL</span><span>ACME · INTERNAL</span>
+                <span>ACME · INTERNAL</span><span>ACME · INTERNAL</span>
+              </div>
+              <div class="shell-badges">
+                <span class="mini-badge teal" data-i18n="preview.shellBadge1">Org-Private · Signed Gate</span>
+                <span class="mini-badge" data-i18n="preview.shellBadge2">CSP: default-src 'none'</span>
+              </div>
+              <div class="mock-bars">
+                <div class="mock-metric">
+                  <div class="label" data-i18n="preview.metric1">CLI Publish</div>
+                  <div class="val">&lt; 300ms</div>
+                </div>
+                <div class="mock-metric">
+                  <div class="label" data-i18n="preview.metric2">External Requests</div>
+                  <div class="val">0</div>
+                </div>
+                <div class="mock-metric">
+                  <div class="label" data-i18n="preview.metric3">Export Formats</div>
+                  <div class="val">5</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="section">
+      <div class="container">
+        <div class="section-head">
+          <div class="section-kicker" data-i18n="features.kicker">Capabilities</div>
+          <h2 data-i18n="features.title">Built for teams sharing AI artifacts safely</h2>
+          <p data-i18n="features.sub">
+            Everything needed to move generated dashboards, reports, and prototypes out of local chats without exposing your domain to XSS or data exfiltration.
+          </p>
+        </div>
+
+        <div class="features-grid">
+          <article class="feature-card">
+            <div class="feature-icon" aria-hidden="true">🛡️</div>
+            <h3 data-i18n="f1.title">Double-Origin &amp; Zero-Network CSP</h3>
+            <p data-i18n="f1.desc">Console cookies are bound strictly to APP_ORIGIN via __Host- cookies. Served pages run on an isolated SERVE_ORIGIN inside sandboxed iframes blocking all outbound network calls.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-icon" aria-hidden="true">⚡</div>
+            <h3 data-i18n="f2.title">Native Rust CLI</h3>
+            <p data-i18n="f2.desc">Single-binary CLI for macOS, Linux, and Windows with OIDC browser login, same-URL updates, org template lookup, and PDF/PNG export. Zero runtime dependencies.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-icon" aria-hidden="true">🤖</div>
+            <h3 data-i18n="f3.title">Native MCP 2.0 Server</h3>
+            <p data-i18n="f3.desc">Connect Claude Desktop, Claude Code, Cursor, or Codex directly to POST /mcp with scoped API tokens for publishing, listing, visibility switching, and cleanup.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-icon" aria-hidden="true">🎨</div>
+            <h3 data-i18n="f4.title">Org Templates &amp; Full-Page Watermarks</h3>
+            <p data-i18n="f4.desc">Manage versioned HTML style templates by category, apply organization branding, and enforce tamper-resistant diagonal viewer watermarks on both web and exports.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-icon" aria-hidden="true">📄</div>
+            <h3 data-i18n="f5.title">Air-Gapped Export Microservice</h3>
+            <p data-i18n="f5.desc">Convert pages to Markdown or HTML locally, or render pixel-accurate PDF, PNG, and JPEG through an isolated Chromium container with external Internet disabled.</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-icon" aria-hidden="true">🧭</div>
+            <h3 data-i18n="f6.title">Web Setup Wizard &amp; Self-Hosting</h3>
+            <p data-i18n="f6.desc">Spin up with Docker Compose or Vercel + Neon. Built-in first-run /setup wizard configures Postgres, local or S3/R2 storage, and invite-only policies with zero hand-editing.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="security" class="section">
+      <div class="container">
+        <div class="section-head">
+          <div class="section-kicker" data-i18n="arch.kicker">Security Architecture</div>
+          <h2 data-i18n="arch.title">Defense-in-depth isolation by default</h2>
+          <p data-i18n="arch.sub">
+            Arbitrary AI-generated HTML never shares an origin, cookie jar, or network surface with your workspace console.
+          </p>
+        </div>
+
+        <div class="arch-grid">
+          <div class="arch-card">
+            <span class="arch-domain">APP_ORIGIN · app.kioskai.dev</span>
+            <h3 data-i18n="arch.appTitle">Console, API &amp; Branded Shell</h3>
+            <ul class="arch-list">
+              <li data-i18n="arch.app1">Next.js App Router console, OAuth/OIDC, and organization RBAC</li>
+              <li data-i18n="arch.app2">__Host- session cookies strictly locked to APP_ORIGIN</li>
+              <li data-i18n="arch.app3">REST v1 API, stateless MCP server (/mcp), and /v/:id branded wrapper</li>
+              <li data-i18n="arch.app4">Mints short-lived HMAC serve tokens for org-private pages</li>
+            </ul>
+          </div>
+
+          <div class="arch-divider">
+            <div class="arch-arrow">→</div>
+            <span data-i18n="arch.bridge">Sandboxed iframe + HMAC Token</span>
+          </div>
+
+          <div class="arch-card isolated">
+            <span class="arch-domain">SERVE_ORIGIN · isolated domain</span>
+            <h3 data-i18n="arch.serveTitle">Stateless Zero-Network Serving</h3>
+            <ul class="arch-list">
+              <li data-i18n="arch.serve1">Separate registrable domain with zero cookies and zero storage</li>
+              <li data-i18n="arch.serve2">Strict CSP: default-src 'none'; connect-src 'none'; form-action 'none'</li>
+              <li data-i18n="arch.serve3">Verifies signed token gate before returning org-private HTML</li>
+              <li data-i18n="arch.serve4">Completely isolated from console credentials and internal APIs</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="install" class="section">
+      <div class="container split-2">
+        <div>
+          <div class="section-head">
+            <div class="section-kicker" data-i18n="install.kicker">Quick Start</div>
+            <h2 data-i18n="install.title">Install in seconds, self-host anywhere</h2>
+            <p data-i18n="install.sub">
+              Prebuilt native binaries for 5 platforms via GitHub Releases, or deploy the full stack on your own server with Docker Compose.
+            </p>
+          </div>
+          <div class="panel">
+            <div class="tab-bar" role="tablist">
+              <button class="tab-btn active" type="button" data-tab="unix" data-i18n="install.tabUnix">macOS / Linux</button>
+              <button class="tab-btn" type="button" data-tab="windows" data-i18n="install.tabWin">Windows (PowerShell)</button>
+              <button class="tab-btn" type="button" data-tab="docker" data-i18n="install.tabDocker">Docker Compose</button>
+              <button class="tab-btn" type="button" data-tab="cargo" data-i18n="install.tabCargo">Cargo (Source)</button>
+            </div>
+            <div class="code-block-wrap">
+              <pre><code id="install-code"></code></pre>
+              <button id="install-copy-btn" class="copy-btn" data-copy-btn type="button">Copy</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="mcp">
+          <div class="section-head">
+            <div class="section-kicker" data-i18n="mcp.kicker">AI Agent Integration</div>
+            <h2 data-i18n="mcp.title">Connect your coding assistant via MCP</h2>
+            <p data-i18n="mcp.sub">
+              Add Kiosk to Claude Desktop, Cursor, or Codex once, then ask your agent to publish any generated HTML directly to your organization workspace.
+            </p>
+          </div>
+          <div class="panel">
+            <div class="code-block-wrap">
+              <pre><code id="mcp-code"></code></pre>
+              <button id="mcp-copy-btn" class="copy-btn" data-copy-btn type="button">Copy</button>
+            </div>
+          </div>
+          <p style="margin-top: 12px; font-size: 0.875rem; font-weight: 600; color: var(--accent);">
+            <a href="https://github.com/du0wen/kiosk/blob/main/docs/mcp.md" target="_blank" rel="noreferrer" data-i18n="mcp.docsLink">Read full MCP documentation →</a>
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <img src="/icon.svg" alt="Kiosk" width="22" height="22" />
+        <strong style="color: var(--text-primary);">Kiosk</strong>
+        <span>·</span>
+        <span data-i18n="footer.copy">MIT Licensed · Built for AI coding workflows</span>
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/du0wen/kiosk/blob/main/docs/self-hosting.md" target="_blank" rel="noreferrer" data-i18n="footer.docs">Self-Hosting</a>
+        <a href="https://github.com/du0wen/kiosk/blob/main/docs/mcp.md" target="_blank" rel="noreferrer" data-i18n="footer.mcp">MCP Guide</a>
+        <a href="https://github.com/du0wen/kiosk/blob/main/SECURITY.md" target="_blank" rel="noreferrer" data-i18n="footer.security">Security</a>
+        <a href="https://github.com/du0wen/kiosk/releases" target="_blank" rel="noreferrer" data-i18n="footer.releases">Releases</a>
+        <a href="https://github.com/du0wen/kiosk" target="_blank" rel="noreferrer" data-i18n="footer.github">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>
