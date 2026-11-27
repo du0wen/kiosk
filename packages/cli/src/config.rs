@@ -7,7 +7,35 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::CliError;
 
-pub const DEFAULT_API_BASE: &str = "http://localhost:3000/api/v1";
+pub const DEFAULT_API_BASE: &str = "https://app.kioskai.dev/api/v1";
+
+pub fn normalize_api_base(input: &str) -> Result<String, CliError> {
+    let trimmed = input.trim();
+    if trimmed.is_empty() {
+        return Err(CliError::new("Server URL cannot be empty"));
+    }
+    let with_scheme = if trimmed.starts_with("http://") || trimmed.starts_with("https://") {
+        trimmed.to_owned()
+    } else {
+        format!("https://{trimmed}")
+    };
+    let clean = with_scheme.trim_end_matches('/');
+    if clean == "http:" || clean == "https:" || clean.ends_with("://") {
+        return Err(CliError::new(format!("Invalid server URL: {trimmed}")));
+    }
+    if clean.ends_with("/api/v1") {
+        Ok(clean.to_owned())
+    } else {
+        Ok(format!("{clean}/api/v1"))
+    }
+}
+
+pub fn display_origin(api_base: &str) -> &str {
+    api_base
+        .trim_end_matches('/')
+        .strip_suffix("/api/v1")
+        .unwrap_or(api_base)
+}
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 pub struct Config {

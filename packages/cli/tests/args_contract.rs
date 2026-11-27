@@ -98,3 +98,21 @@ fn export_defaults_to_pdf_and_accepts_short_output() {
     assert_eq!(args.format, ExportFormat::Pdf);
     assert_eq!(args.output.unwrap().to_string_lossy(), "report.pdf");
 }
+
+#[test]
+fn login_accepts_host_and_token_flags() {
+    let cli = Cli::try_parse_from([
+        "kiosk",
+        "login",
+        "--host",
+        "https://kiosk.company.com",
+        "--token",
+        "kiosk_api_123",
+    ])
+    .unwrap();
+    let Some(Command::Login(args)) = cli.command else {
+        panic!("expected login command");
+    };
+    assert_eq!(args.host.as_deref(), Some("https://kiosk.company.com"));
+    assert_eq!(args.token.as_deref(), Some("kiosk_api_123"));
+}

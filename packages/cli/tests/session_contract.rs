@@ -5,7 +5,9 @@ use kiosk_cli::browser::BrowserOpener;
 use kiosk_cli::client::{ApiClient, ExportResult, PageResult, Visibility};
 use kiosk_cli::config::{config_path, resolve_config};
 use kiosk_cli::error::CliError;
-use kiosk_cli::session::{login_with_token, logout, open_mapped_page, resolve_open_url};
+use kiosk_cli::session::{
+    LoginMethod, login_with_token, logout, open_mapped_page, prompt_login_plan, resolve_open_url,
+};
 use kiosk_cli::state::{PageMapping, mapping_key, write_mapping};
 use serde_json::{Value, json};
 use tempfile::tempdir;
@@ -115,4 +117,24 @@ fn open_resolves_only_existing_project_mappings() {
         ["https://kiosk.test/v/abc"]
     );
     assert!(resolve_open_url(root.path(), &root.path().join("missing.html")).is_err());
+}
+
+#[test]
+fn interactive_login_prompt_defaults_to_official_cloud_and_browser() {
+    let mut input = std::io::Cursor::new(b"\n\n".as_slice());
+    let mut output = Vec::new();
+    let plan =
+        prompt_login_plan("https://app.kioskai.dev/api/v1", &mut input, &mut output).unwrap();
+    assert_eq!(plan.api_base, "https://app.kioskai.dev/api/v1");
+    assert_eq!(plan.method, LoginMethod::Browser);
+}
+
+#[test]
+fn interactive_login_prompt_supports_custom_host_and_token() {
+    let mut input = std::io::Cursor::new(b"2\nkiosk.company.com\n2\nkiosk_api_secret\n".as_slice());
+    let mut output = Vec::new();
+    let plan =
+        prompt_login_plan("https://app.kioskai.dev/api/v1", &mut input, &mut output).unwrap();
+    assert_eq!(plan.api_base, "https://kiosk.company.com/api/v1");
+    assert_eq!(plan.method, LoginMethod::Token("kiosk_api_secret".into()));
 }

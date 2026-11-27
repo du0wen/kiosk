@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::env;
-use std::io::{self, Write};
+use std::io::{self, IsTerminal, Write};
 use std::process::ExitCode;
 
 use clap::{CommandFactory, Parser};
@@ -9,9 +9,13 @@ use kiosk_cli::auth::browser_login;
 use kiosk_cli::browser::SystemBrowser;
 use kiosk_cli::client::KioskClient;
 use kiosk_cli::commands::{execute_api_command, require_token};
-use kiosk_cli::config::{Config, home_from_env, resolve_config, save_config};
+use kiosk_cli::config::{
+    Config, display_origin, home_from_env, normalize_api_base, resolve_config, save_config,
+};
 use kiosk_cli::error::CliError;
-use kiosk_cli::session::{login_with_token, logout, open_mapped_page};
+use kiosk_cli::session::{
+    LoginMethod, login_with_token, logout, open_mapped_page, prompt_login_plan,
+};
 use kiosk_cli::skills::{InstallSkillOptions, install_skill};
 use kiosk_cli::state::find_project_root;
 
@@ -48,20 +52,45 @@ fn run(cli: Cli) -> Result<(), CliError> {
                 .token
                 .as_deref()
                 .or_else(|| environment.get("KIOSK_TOKEN").map(String::as_str));
-            if let Some(token) = provided_token {
-                let client = KioskClient::new(config.api_base.clone(), token.to_owned());
-                login_with_token(&home, &config.api_base, token, &client)?;
+            let has_explicit_host =
+                args.host.is_some() || environment.contains_key("KIOSK_API_BASE");
+
+            let (api_base, method) = if let Some(token) = provided_token {
+                let target_base = match args.host.as_deref() {
+                    Some(host) => normalize_api_base(host)?,
+                    None => config.api_base.clone(),
+                };
+                (target_base, LoginMethod::Token(token.to_owned()))
+            } else if has_explicit_host || !io::stdin().is_terminal() {
+                let target_base = match args.host.as_deref() {
+                    Some(host) => normalize_api_base(host)?,
+                    None => config.api_base.clone(),
+                };
+                (target_base, LoginMethod::Browser)
             } else {
-                let token = browser_login(&config.api_base, &SystemBrowser, &mut stdout)?;
-                save_config(
-                    &home,
-                    &Config {
-                        token: Some(token),
-                        api_base: config.api_base,
-                    },
-                )?;
+                let stdin = io::stdin();
+                let mut stdin = stdin.lock();
+                let plan = prompt_login_plan(&config.api_base, &mut stdin, &mut stdout)?;
+                (plan.api_base, plan.method)
+            };
+
+            match method {
+                LoginMethod::Token(token) => {
+                    let client = KioskClient::new(api_base.clone(), token.clone());
+                    login_with_token(&home, &api_base, &token, &client)?;
+                }
+                LoginMethod::Browser => {
+                    let token = browser_login(&api_base, &SystemBrowser, &mut stdout)?;
+                    save_config(
+                        &home,
+                        &Config {
+                            token: Some(token),
+                            api_base: api_base.clone(),
+                        },
+                    )?;
+                }
             }
-            writeln!(stdout, "Logged in.")?;
+            writeln!(stdout, "Logged in to {}.", display_origin(&api_base))?;
             Ok(())
         }
         Command::Logout => {

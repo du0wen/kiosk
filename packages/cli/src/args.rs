@@ -44,8 +44,12 @@ pub enum Command {
 
 #[derive(Debug, Args)]
 pub struct LoginArgs {
+    /// API token to authenticate with instead of browser login.
     #[arg(long)]
     pub token: Option<String>,
+    /// Kiosk server URL (e.g. https://app.kioskai.dev or https://kiosk.company.com).
+    #[arg(long)]
+    pub host: Option<String>,
 }
 
 #[derive(Debug, Args)]

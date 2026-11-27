@@ -2,7 +2,8 @@ use std::collections::HashMap;
 use std::fs;
 
 use kiosk_cli::config::{
-    Config, DEFAULT_API_BASE, config_path, home_from_env, resolve_config, save_config,
+    Config, DEFAULT_API_BASE, config_path, display_origin, home_from_env, normalize_api_base,
+    resolve_config, save_config,
 };
 use tempfile::tempdir;
 
@@ -88,4 +89,33 @@ fn save_uses_owner_only_permissions() {
         .mode()
         & 0o777;
     assert_eq!(mode, 0o600);
+}
+
+#[test]
+fn normalizes_host_inputs_into_api_base() {
+    assert_eq!(
+        normalize_api_base("https://app.kioskai.dev").unwrap(),
+        "https://app.kioskai.dev/api/v1"
+    );
+    assert_eq!(
+        normalize_api_base("https://app.kioskai.dev/").unwrap(),
+        "https://app.kioskai.dev/api/v1"
+    );
+    assert_eq!(
+        normalize_api_base("https://app.kioskai.dev/api/v1/").unwrap(),
+        "https://app.kioskai.dev/api/v1"
+    );
+    assert_eq!(
+        normalize_api_base("kiosk.company.com").unwrap(),
+        "https://kiosk.company.com/api/v1"
+    );
+    assert_eq!(
+        normalize_api_base("http://localhost:58671").unwrap(),
+        "http://localhost:58671/api/v1"
+    );
+    assert!(normalize_api_base("   ").is_err());
+    assert_eq!(
+        display_origin("https://app.kioskai.dev/api/v1"),
+        "https://app.kioskai.dev"
+    );
 }

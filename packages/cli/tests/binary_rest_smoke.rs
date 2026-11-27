@@ -89,7 +89,13 @@ fn native_token_login_and_logout_use_an_isolated_home() {
         "{}",
         String::from_utf8_lossy(&login.stderr)
     );
-    assert_eq!(login.stdout, b"Logged in.\n");
+    assert_eq!(
+        String::from_utf8_lossy(&login.stdout),
+        format!(
+            "Logged in to {}.\n",
+            kiosk_cli::config::display_origin(&api_base)
+        )
+    );
     let saved: serde_json::Value = serde_json::from_slice(
         &std::fs::read(home.path().join(".config/kiosk/config.json")).unwrap(),
     )
