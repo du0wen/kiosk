@@ -64,6 +64,9 @@ User / AI Agent
 Pre-built binaries are available for macOS, Linux, and Windows (no Rust or Node.js required):
 
 ```bash
+# npm (macOS, Linux, Windows — downloads prebuilt native binary)
+npm install -g @kioskai/cli
+
 # macOS / Linux (Shell installer)
 curl --proto '=https' --tlsv1.2 -LsSf https://github.com/du0wen/kiosk/releases/latest/download/kiosk-cli-installer.sh | sh
 

@@ -41,9 +41,9 @@
     <section class="hero">
       <div class="container hero-grid">
         <div>
-          <a class="pill" href="https://github.com/du0wen/kiosk/releases/tag/v0.1.0" target="_blank" rel="noreferrer">
+          <a class="pill" href="https://github.com/du0wen/kiosk/releases/latest" target="_blank" rel="noreferrer">
             <span class="pill-dot"></span>
-            <span data-i18n="hero.badge">Open Source · MIT License · v0.1.0</span>
+            <span data-i18n="hero.badge">Open Source · MIT License · v0.1.1</span>
           </a>
           <h1 data-i18n="hero.title">Publish AI-generated HTML with zero-network isolation.</h1>
           <p class="hero-sub" data-i18n="hero.sub">
@@ -55,7 +55,7 @@
             <a class="btn btn-secondary" href="https://github.com/du0wen/kiosk/blob/main/docs/self-hosting.md" target="_blank" rel="noreferrer" data-i18n="hero.ctaSelfHost">Self-Host Guide</a>
           </div>
           <div class="quick-cmd">
-            <code><span class="prompt">$</span>curl -LsSf https://github.com/du0wen/kiosk/releases/latest/download/kiosk-cli-installer.sh | sh</code>
+            <code><span class="prompt">$</span>npm install -g @kioskai/cli</code>
             <button id="hero-copy-btn" class="copy-btn" data-copy-btn type="button">Copy</button>
           </div>
         </div>
@@ -206,7 +206,8 @@
           </div>
           <div class="panel">
             <div class="tab-bar" role="tablist">
-              <button class="tab-btn active" type="button" data-tab="unix" data-i18n="install.tabUnix">macOS / Linux</button>
+              <button class="tab-btn active" type="button" data-tab="npm" data-i18n="install.tabNpm">npm</button>
+              <button class="tab-btn" type="button" data-tab="unix" data-i18n="install.tabUnix">macOS / Linux</button>
               <button class="tab-btn" type="button" data-tab="windows" data-i18n="install.tabWin">Windows (PowerShell)</button>
               <button class="tab-btn" type="button" data-tab="docker" data-i18n="install.tabDocker">Docker Compose</button>
               <button class="tab-btn" type="button" data-tab="cargo" data-i18n="install.tabCargo">Cargo (Source)</button>

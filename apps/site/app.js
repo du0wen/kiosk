@@ -7,6 +7,7 @@ const SITE_CONFIG = {
 };
 
 const INSTALL_SNIPPETS = {
+  npm: `npm install -g @kioskai/cli`,
   unix: `curl --proto '=https' --tlsv1.2 -LsSf https://github.com/du0wen/kiosk/releases/latest/download/kiosk-cli-installer.sh | sh`,
   windows: `powershell -ExecutionPolicy ByPass -c "irm https://github.com/du0wen/kiosk/releases/latest/download/kiosk-cli-installer.ps1 | iex"`,
   docker: `git clone https://github.com/du0wen/kiosk.git\ncd kiosk\ncp docker-compose.env.example .env\ndocker compose up -d`,
@@ -32,7 +33,7 @@ const I18N = {
     "nav.install": "Install",
     "nav.mcp": "MCP",
     "nav.console": "Open Console",
-    "hero.badge": "Open Source · MIT License · v0.1.0",
+    "hero.badge": "Open Source · MIT License · v0.1.1",
     "hero.title": "Publish AI-generated HTML with zero-network isolation.",
     "hero.sub": "Turn single-file HTML artifacts from Claude Code, Codex, and Cursor into shareable, organization-scoped URLs with strict CSP sandboxing, full-page watermarks, and native MCP.",
     "hero.ctaPrimary": "Launch Console",
@@ -75,6 +76,7 @@ const I18N = {
     "install.kicker": "Quick Start",
     "install.title": "Install in seconds, self-host anywhere",
     "install.sub": "Prebuilt native binaries for 5 platforms via GitHub Releases, or deploy the full stack on your own server with Docker Compose.",
+    "install.tabNpm": "npm",
     "install.tabUnix": "macOS / Linux",
     "install.tabWin": "Windows (PowerShell)",
     "install.tabDocker": "Docker Compose",
@@ -98,7 +100,7 @@ const I18N = {
     "nav.install": "快速安装",
     "nav.mcp": "MCP 集成",
     "nav.console": "打开控制台",
-    "hero.badge": "开源项目 · MIT 协议 · v0.1.0",
+    "hero.badge": "开源项目 · MIT 协议 · v0.1.1",
     "hero.title": "一键发布 AI 生成的 HTML，零外网沙盒隔离。",
     "hero.sub": "将 Claude Code、Codex、Cursor 生成的自包含 HTML 作品一键发布为组织私有或公开可分享链接，内置严格双源隔离、整页动态水印与原生 MCP 协议。",
     "hero.ctaPrimary": "进入在线控制台",
@@ -141,6 +143,7 @@ const I18N = {
     "install.kicker": "快速上手",
     "install.title": "秒级安装 CLI，随处自托管",
     "install.sub": "GitHub Releases 提供 5 平台预编译二进制与一键安装脚本，也可用 Docker Compose 一条命令私有化部署全套服务。",
+    "install.tabNpm": "npm",
     "install.tabUnix": "macOS / Linux",
     "install.tabWin": "Windows (PowerShell)",
     "install.tabDocker": "Docker Compose",
@@ -167,7 +170,7 @@ function detectLocale() {
 }
 
 let currentLocale = detectLocale();
-let currentTab = "unix";
+let currentTab = "npm";
 
 function applyTranslations() {
   const dict = I18N[currentLocale] || I18N.en;
@@ -238,7 +241,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const heroCopyBtn = document.getElementById("hero-copy-btn");
   if (heroCopyBtn) {
-    heroCopyBtn.addEventListener("click", () => copyText(INSTALL_SNIPPETS.unix, heroCopyBtn));
+    heroCopyBtn.addEventListener("click", () => copyText(INSTALL_SNIPPETS.npm, heroCopyBtn));
   }
 
   const installCopyBtn = document.getElementById("install-copy-btn");
